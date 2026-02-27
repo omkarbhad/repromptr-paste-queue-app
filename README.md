@@ -64,134 +64,110 @@ The application runs as a lightweight, always-on-top floating window that monito
 ### System Design
 
 ```
-╔═══════════════════════════════════════════════════════════╗
-║              Pastr Application Architecture              ║
-╚═══════════════════════════════════════════════════════════╝
-
-┌─────────────────────────────────────────────────────────┐
-│                   MAIN PROCESS (main.js)                │
-│                                                          │
-│  ┌─ Clipboard Monitor (1000ms polling)               │
-│  ├─ Platform Detection (macOS/Windows/Linux/ARM)     │
-│  ├─ Paste Simulation (osascript/PowerShell/xdotool)  │
-│  ├─ Window Management & Positioning                  │
-│  ├─ IPC Event Handlers                               │
-│  └─ History Queue (max 30 items)                     │
-│                                                          │
-│  Exposed via ipcMain handlers:                          │
-│    • paste-item, paste-next, copy-item                │
-│    • delete-item, move-to-top, clear-all             │
-│    • toggle-sticky, set-auto-remove                  │
-└──────────────────────────┬──────────────────────────────┘
-                           │
-         ┌─────────────────┴─────────────────┐
-         │  IPC (Inter-Process Communication) │
-         │     via contextBridge (secure)      │
-         └─────────────────┬─────────────────┘
-                           │
-┌──────────────────────────▼──────────────────────────────┐
-│              RENDERER PROCESS (index.html)              │
-│                                                          │
-│  ┌─ UI Layer                                         │
-│  │  • Dark glassmorphic design                       │
-│  │  • Queue item rendering                          │
-│  │  • Empty state management                        │
-│  │                                                    │
-│  ├─ Event Handlers                                  │
-│  │  • Keyboard shortcuts (Space, Cmd+Z, Esc)       │
-│  │  • Click/right-click actions                     │
-│  │  • Auto-remove & sticky toggles                 │
-│  │                                                    │
-│  └─ State Management                                │
-│     • history[] — clipboard queue                   │
-│     • autoRemove, isPasting, undoStack              │
-│                                                          │
-│  API Bridge (via window.api):                         │
-│    • pasteItem, pasteNext, copyItem                  │
-│    • deleteItem, moveToTop, clearAll                │
-│    • toggleSticky, minimizeApp, closeApp            │
-└──────────────────────────┬──────────────────────────────┘
-                           │
-         ┌─────────────────┴─────────────────┐
-         │  Preload Script (preload.js)      │
-         │  • contextBridge.exposeInMainWorld│
-         │  • Secure API gateway            │
-         │  • No Node.js access in renderer │
-         └─────────────────┬─────────────────┘
-                           │
-                           ▼
-        ┌──────────────────────────────────┐
-        │   Operating System Integration   │
-        ├──────────────────────────────────┤
-        │ • System Clipboard Access        │
-        │ • Native Keystroke Simulation    │
-        │ • Window Manager Integration     │
-        └──────────────────────────────────┘
+╔══════════════════════════════════════════════════════════════════╗
+║                  Pastr  —  Application Architecture             ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║  ┌────────────────────────────────────────────────────────────┐ ║
+║  │                  MAIN PROCESS  (main.js)                   │ ║
+║  ├────────────────────────────────────────────────────────────┤ ║
+║  │  Responsibilities                                          │ ║
+║  │  ├─ Clipboard Monitor      poll every 1000 ms             │ ║
+║  │  ├─ Platform Detection     macOS / Windows / Linux / ARM  │ ║
+║  │  ├─ Paste Simulation       osascript · PowerShell · xdotool│ ║
+║  │  ├─ Window Management      position · sticky · focus      │ ║
+║  │  ├─ IPC Event Handlers     receive & dispatch commands     │ ║
+║  │  └─ History Queue          up to 30 items                 │ ║
+║  │                                                            │ ║
+║  │  IPC Channels (ipcMain.handle)                            │ ║
+║  │  ├─ paste-item  paste-next  copy-item                     │ ║
+║  │  ├─ delete-item  move-to-top  clear-all                   │ ║
+║  │  └─ toggle-sticky  set-auto-remove                        │ ║
+║  └──────────────────────────┬─────────────────────────────────┘ ║
+║                             │                                    ║
+║              ───────────────┴───────────────                     ║
+║              IPC via contextBridge  (secure)                     ║
+║              ───────────────┬───────────────                     ║
+║                             │                                    ║
+║  ┌──────────────────────────▼─────────────────────────────────┐ ║
+║  │              RENDERER PROCESS  (index.html)                │ ║
+║  ├────────────────────────────────────────────────────────────┤ ║
+║  │  UI Layer                                                  │ ║
+║  │  ├─ Dark glassmorphic design                              │ ║
+║  │  ├─ Queue item rendering & animations                     │ ║
+║  │  └─ Empty state management                               │ ║
+║  │                                                            │ ║
+║  │  Event Handlers                                           │ ║
+║  │  ├─ Keyboard  Space · Cmd+Z / Ctrl+Z · Esc               │ ║
+║  │  ├─ Click / right-click item actions                      │ ║
+║  │  └─ Auto-remove & sticky toggles                         │ ║
+║  │                                                            │ ║
+║  │  State  →  history[]  ·  autoRemove  ·  undoStack        │ ║
+║  │  API    →  window.api  (pasteItem · deleteItem · …)      │ ║
+║  └──────────────────────────┬─────────────────────────────────┘ ║
+║                             │                                    ║
+║  ┌──────────────────────────▼─────────────────────────────────┐ ║
+║  │               PRELOAD SCRIPT  (preload.js)                 │ ║
+║  ├────────────────────────────────────────────────────────────┤ ║
+║  │  contextBridge.exposeInMainWorld("api", { … })            │ ║
+║  │  Secure gateway — no direct Node.js access in renderer    │ ║
+║  └──────────────────────────┬─────────────────────────────────┘ ║
+║                             │                                    ║
+║  ┌──────────────────────────▼─────────────────────────────────┐ ║
+║  │              OPERATING SYSTEM  INTEGRATION                 │ ║
+║  ├────────────────────────────────────────────────────────────┤ ║
+║  │  System Clipboard   ·   Keystroke Simulation               │ ║
+║  │  Window Manager     ·   Native Process Execution           │ ║
+║  └────────────────────────────────────────────────────────────┘ ║
+╚══════════════════════════════════════════════════════════════════╝
 ```
 
 ### Platform-Specific Paste Flow
 
 ```
-╔══════════════════════════════════════════════════════════╗
-║         User Action: Click Paste or Press Space          ║
-╚══════════════════════════════════════════════════════════╝
-                          │
-                          ▼
-        ┌─────────────────────────────────┐
-        │   RENDERER PROCESS (index.html)  │
-        │  • Captures keyboard/click event │
-        │  • Invokes window.api.pasteItem()│
-        └─────────────────┬───────────────┘
-                          │
-              ipcRenderer.invoke("paste-item")
-                          │
-                          ▼
-        ┌─────────────────────────────────┐
-        │   PRELOAD SCRIPT (preload.js)   │
-        │  • Routes IPC to main process   │
-        └─────────────────┬───────────────┘
-                          │
-                  ipcMain.handle()
-                          │
-                          ▼
-        ┌─────────────────────────────────┐
-        │   MAIN PROCESS (main.js)        │
-        │  simulatePaste() function       │
-        └──────┬────────────────────────┬─┘
-               │                        │
-        Platform Detection              │
-               │                        │
-      ┌────────┼────────┐              │
-      │        │        │              │
-      ▼        ▼        ▼              │
-   ┌─────┐ ┌──────┐ ┌──────┐          │
-   │ macOS   Windows  Linux │          │
-   ├─────┤ ├──────┤ ├──────┤          │
-   │execFile│execFile│execFile         │
-   │osascript PowerShell  xdotool     │
-   │        │ +fallback   +fallback    │
-   │keystroke  ydotool    ydotool     │
-   └─────┘ └──────┘ └──────┘          │
-      │        │        │              │
-      └────────┼────────┘              │
-               │                        │
-               ▼                        ▼
-        ┌──────────────────┐    ┌─────────────┐
-        │ Execute Command  │    │ Update      │
-        │ (platform native)│────► Clipboard   │
-        └──────────────────┘    └─────────────┘
-               │                        │
-               ▼                        ▼
-        ┌────────────────────────────────┐
-        │ Simulate Keystroke             │
-        │ (Cmd+V / Ctrl+V / Ctrl+V)      │
-        └──────────┬─────────────────────┘
+╔══════════════════════════════════════════════════════════════════╗
+║            User Action — Click Item  or  Press Space            ║
+╚═════════════════════════════╤════════════════════════════════════╝
+                              │
+                              ▼
+        ┌─────────────────────────────────────────┐
+        │        RENDERER  (index.html)            │
+        │  Captures event → window.api.pasteItem() │
+        └─────────────────────┬───────────────────┘
+                              │  ipcRenderer.invoke("paste-item")
+                              ▼
+        ┌─────────────────────────────────────────┐
+        │        PRELOAD  (preload.js)             │
+        │  Routes call to main via contextBridge   │
+        └─────────────────────┬───────────────────┘
+                              │  ipcMain.handle()
+                              ▼
+        ┌─────────────────────────────────────────┐
+        │        MAIN  (main.js)                   │
+        │  simulatePaste(text)                     │
+        └──────────┬──────────────────────────────┘
+                   │
+          Platform Detection
+                   │
+      ┌────────────┼────────────┐
+      ▼            ▼            ▼
+┌───────────┐ ┌──────────┐ ┌──────────┐
+│   macOS   │ │ Windows  │ │  Linux   │
+├───────────┤ ├──────────┤ ├──────────┤
+│ osascript │ │PowerShell│ │ xdotool  │
+│ keystroke │ │ SendKeys │ │ydotool ↩ │
+└─────┬─────┘ └────┬─────┘ └────┬─────┘
+      └────────────┼────────────┘
                    │
                    ▼
-        ┌────────────────────────────────┐
-        │ Target Application             │
-        │ Receives Paste Successfully ✓  │
-        └────────────────────────────────┘
+        ┌──────────────────────────────┐
+        │  Set clipboard  +  Cmd/Ctrl+V │
+        └──────────────┬───────────────┘
+                       │
+                       ▼
+        ┌──────────────────────────────┐
+        │  Target App receives paste ✓ │
+        └──────────────────────────────┘
 ```
 
 ---
