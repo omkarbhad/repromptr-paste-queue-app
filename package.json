@@ -1,26 +1,32 @@
 {
-  "name": "pastr",
-  "version": "1.0.0",
-  "description": "A beautiful floating clipboard queue manager for macOS, Windows & Linux",
+  "name": "repromptr",
+  "version": "2.0.0",
+  "description": "AI-powered clipboard queue manager with text rewriting — macOS, Windows & Linux",
   "main": "main.js",
   "author": "Omkar Bhad",
   "license": "MIT",
-  "homepage": "https://github.com/omkarbhad/pastr-paste-queue-app#readme",
+  "homepage": "https://github.com/omkarbhad/repromptr#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/omkarbhad/pastr-paste-queue-app.git"
+    "url": "https://github.com/omkarbhad/repromptr.git"
   },
   "bugs": {
-    "url": "https://github.com/omkarbhad/pastr-paste-queue-app/issues"
+    "url": "https://github.com/omkarbhad/repromptr/issues"
   },
   "keywords": [
     "clipboard",
     "clipboard-manager",
+    "ai",
+    "text-rewriting",
+    "reprompt",
     "paste",
     "electron",
     "cross-platform",
     "productivity",
-    "utility"
+    "utility",
+    "openai",
+    "claude",
+    "openrouter"
   ],
   "scripts": {
     "start": "ELECTRON_RUN_AS_NODE= electron .",
@@ -31,12 +37,14 @@
     "build:all": "electron-builder -mwl"
   },
   "build": {
-    "appId": "com.pastr.app",
-    "productName": "Pastr",
+    "appId": "com.repromptr.app",
+    "productName": "Repromptr",
     "files": [
       "main.js",
       "preload.js",
       "index.html",
+      "config.html",
+      "repromptr_logo.png",
       "node_modules/**/*"
     ],
     "mac": {
@@ -99,7 +107,7 @@
         }
       ],
       "category": "Utility",
-      "maintainer": "Pastr Contributors"
+      "maintainer": "Repromptr Contributors"
     },
     "nsis": {
       "oneClick": false,
@@ -111,5 +119,8 @@
   "devDependencies": {
     "electron": "^33.4.11",
     "electron-builder": "^24.9.1"
+  },
+  "dependencies": {
+    "lucide": "^0.575.0"
   }
 }

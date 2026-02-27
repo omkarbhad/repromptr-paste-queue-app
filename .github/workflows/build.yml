@@ -1,4 +1,4 @@
-name: Build Pastr
+name: Build Repromptr
 
 on:
   push:
@@ -43,7 +43,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: Pastr-${{ runner.os }}-${{ matrix.node-version }}
+        name: Repromptr-${{ runner.os }}-${{ matrix.node-version }}
         path: dist/
 
   release-please:
@@ -56,4 +56,4 @@ jobs:
       - uses: google-github-actions/release-please-action@v3
         with:
           release-type: node
-          package-name: pastr
+          package-name: repromptr

@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea for Pastr
+about: Suggest an idea for Repromptr
 title: "[FEATURE] "
 labels: enhancement
 assignees: ''

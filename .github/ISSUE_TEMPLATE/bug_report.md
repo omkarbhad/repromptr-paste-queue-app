@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a bug to help us improve Pastr
+about: Report a bug to help us improve Repromptr
 title: "[BUG] "
 labels: bug
 assignees: ''

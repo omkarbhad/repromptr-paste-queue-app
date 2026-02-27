@@ -2,7 +2,7 @@ version: 2
 updates:
   # Enable version updates for npm dependencies
   - package-ecosystem: "npm"
-    directory: "/scripts/paste-queue-app"
+    directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"

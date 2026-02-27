@@ -1,642 +1,215 @@
-# 📋 Pastr — Advanced Clipboard Queue Manager
+# Repromptr
 
-> A beautiful, floating clipboard history manager for **macOS**, **Windows**, and **Linux** with seamless keyboard shortcuts, cross-platform support, and instant paste functionality. Built with Electron for maximum compatibility across all processors and architectures.
+> AI-powered clipboard queue manager for **macOS**, **Windows**, and **Linux**. Copy text, rewrite it with AI, and paste — all from a floating window.
 
 **Author:** Omkar Bhad
 **License:** MIT
-**Version:** 1.0.0
+**Version:** 2.0.0
 
 ---
 
-## 📖 Overview
+## What It Does
 
-Pastr is a production-ready Electron application that transforms your clipboard management workflow. Instead of manually managing copy-paste operations, Pastr maintains a persistent, searchable clipboard history that you can access instantly with keyboard shortcuts.
+Repromptr is a lightweight Electron app that sits as a floating panel on your screen. It monitors your clipboard, maintains a queue of copied items, and lets you rewrite any text using AI before pasting it.
 
-The application runs as a lightweight, always-on-top floating window that monitors your system clipboard in real-time and maintains a queue of all copied items. With a single keystroke (Space), you can sequentially paste items from your history, dramatically improving productivity for tasks involving multiple copy-paste operations.
+Three tabs:
+- **Repromptr** — AI text rewriting with streaming output and style presets
+- **Queue** — Clipboard history with one-click paste (items auto-removed after use)
+- **Saved** — Bookmarked prompts for reuse, persisted to disk
 
-### Why Pastr?
+### Key Features
 
-- ✨ **Beautiful glassmorphic UI** with dark theme optimized for modern workflows
-- 🚀 **Instant access** — lightweight floating window always accessible
-- ⌨️ **Keyboard-first design** — Space to paste, Cmd+Z/Ctrl+Z to undo, Esc to hide
-- 🔄 **Sequential pasting** — paste multiple items with repeated key presses
-- 🗑️ **Smart auto-remove** — automatically delete items after pasting (configurable)
-- 💾 **Window persistence** — remembers your preferred position
-- 🔒 **Privacy-focused** — no cloud, no tracking, no accounts required
-- 🌍 **True cross-platform** — works on Intel, Apple Silicon, ARM, and 32-bit processors
-
----
-
-## ✨ Key Features
-
-### Core Functionality
-- **Real-time Clipboard Monitoring** — captures every copy operation automatically
-- **Queue Management** — maintain up to 30 items in your clipboard history
-- **Sequential Paste** — press Space repeatedly to paste items in order
-- **Instant Paste** — click any item to paste its contents immediately
-- **Undo Deletion** — recover accidentally deleted items with Cmd+Z or Ctrl+Z
-
-### User Experience
-- **Sticky Toggle** — pin window to stay always-on-top or let it behave normally
-- **Auto-Remove** — automatically delete items after pasting (default enabled)
-- **Context Menu** — right-click items for copy, delete, or move-to-top options
-- **Empty State UX** — clean, intuitive interface when no items are queued
-- **Window Persistence** — remembers window position across sessions
-
-### Technical Excellence
-- **Zero Dependencies** (except Electron) — minimal attack surface
-- **Secure IPC** — context isolation prevents code injection attacks
-- **Performance Optimized** — 1000ms clipboard polling with smart deduplication
-- **Cross-Platform Paste** — native integration for each OS:
-  - **macOS:** AppleScript keystroke simulation (`osascript`)
-  - **Windows:** PowerShell automation
-  - **Linux:** xdotool with ydotool fallback
-
-### Accessibility
-- **No Setup Required** — works out of the box
-- **Minimal Permissions** — only requests Accessibility access on macOS
-- **Lightweight** — runs silently in background without stealing focus
+- **AI Rewriting** — Improve, formalize, condense, expand, or grammar on any text
+- **Streaming Output** — Character-by-character typing animation as the AI responds
+- **Multiple Providers** — OpenAI, Claude (Anthropic), OpenRouter, or any custom endpoint
+- **Custom System Prompt** — Override the default AI behavior
+- **Clipboard Queue** — Up to 30 items, auto-captured from system clipboard
+- **One-Time Paste** — Queue items are removed after pasting
+- **Keyboard-First** — Space to paste next, Cmd+Z to undo, Esc to hide
+- **Always-On-Top** — Floating panel that doesn't steal focus
+- **Cross-Platform** — macOS (Intel + Apple Silicon), Windows, Linux (x64, ARM64, ARMv7)
 
 ---
 
-## 🏗️ Architecture
-
-### System Design
-
-```
-╔══════════════════════════════════════════════════════════════════╗
-║                  Pastr  —  Application Architecture             ║
-╠══════════════════════════════════════════════════════════════════╣
-║                                                                  ║
-║  ┌────────────────────────────────────────────────────────────┐ ║
-║  │                  MAIN PROCESS  (main.js)                   │ ║
-║  ├────────────────────────────────────────────────────────────┤ ║
-║  │  Responsibilities                                          │ ║
-║  │  ├─ Clipboard Monitor      poll every 1000 ms             │ ║
-║  │  ├─ Platform Detection     macOS / Windows / Linux / ARM  │ ║
-║  │  ├─ Paste Simulation       osascript · PowerShell · xdotool│ ║
-║  │  ├─ Window Management      position · sticky · focus      │ ║
-║  │  ├─ IPC Event Handlers     receive & dispatch commands     │ ║
-║  │  └─ History Queue          up to 30 items                 │ ║
-║  │                                                            │ ║
-║  │  IPC Channels (ipcMain.handle)                            │ ║
-║  │  ├─ paste-item  paste-next  copy-item                     │ ║
-║  │  ├─ delete-item  move-to-top  clear-all                   │ ║
-║  │  └─ toggle-sticky  set-auto-remove                        │ ║
-║  └──────────────────────────┬─────────────────────────────────┘ ║
-║                             │                                    ║
-║              ───────────────┴───────────────                     ║
-║              IPC via contextBridge  (secure)                     ║
-║              ───────────────┬───────────────                     ║
-║                             │                                    ║
-║  ┌──────────────────────────▼─────────────────────────────────┐ ║
-║  │              RENDERER PROCESS  (index.html)                │ ║
-║  ├────────────────────────────────────────────────────────────┤ ║
-║  │  UI Layer                                                  │ ║
-║  │  ├─ Dark glassmorphic design                              │ ║
-║  │  ├─ Queue item rendering & animations                     │ ║
-║  │  └─ Empty state management                               │ ║
-║  │                                                            │ ║
-║  │  Event Handlers                                           │ ║
-║  │  ├─ Keyboard  Space · Cmd+Z / Ctrl+Z · Esc               │ ║
-║  │  ├─ Click / right-click item actions                      │ ║
-║  │  └─ Auto-remove & sticky toggles                         │ ║
-║  │                                                            │ ║
-║  │  State  →  history[]  ·  autoRemove  ·  undoStack        │ ║
-║  │  API    →  window.api  (pasteItem · deleteItem · …)      │ ║
-║  └──────────────────────────┬─────────────────────────────────┘ ║
-║                             │                                    ║
-║  ┌──────────────────────────▼─────────────────────────────────┐ ║
-║  │               PRELOAD SCRIPT  (preload.js)                 │ ║
-║  ├────────────────────────────────────────────────────────────┤ ║
-║  │  contextBridge.exposeInMainWorld("api", { … })            │ ║
-║  │  Secure gateway — no direct Node.js access in renderer    │ ║
-║  └──────────────────────────┬─────────────────────────────────┘ ║
-║                             │                                    ║
-║  ┌──────────────────────────▼─────────────────────────────────┐ ║
-║  │              OPERATING SYSTEM  INTEGRATION                 │ ║
-║  ├────────────────────────────────────────────────────────────┤ ║
-║  │  System Clipboard   ·   Keystroke Simulation               │ ║
-║  │  Window Manager     ·   Native Process Execution           │ ║
-║  └────────────────────────────────────────────────────────────┘ ║
-╚══════════════════════════════════════════════════════════════════╝
-```
-
-### Platform-Specific Paste Flow
-
-```
-╔══════════════════════════════════════════════════════════════════╗
-║            User Action — Click Item  or  Press Space            ║
-╚═════════════════════════════╤════════════════════════════════════╝
-                              │
-                              ▼
-        ┌─────────────────────────────────────────┐
-        │        RENDERER  (index.html)            │
-        │  Captures event → window.api.pasteItem() │
-        └─────────────────────┬───────────────────┘
-                              │  ipcRenderer.invoke("paste-item")
-                              ▼
-        ┌─────────────────────────────────────────┐
-        │        PRELOAD  (preload.js)             │
-        │  Routes call to main via contextBridge   │
-        └─────────────────────┬───────────────────┘
-                              │  ipcMain.handle()
-                              ▼
-        ┌─────────────────────────────────────────┐
-        │        MAIN  (main.js)                   │
-        │  simulatePaste(text)                     │
-        └──────────┬──────────────────────────────┘
-                   │
-          Platform Detection
-                   │
-      ┌────────────┼────────────┐
-      ▼            ▼            ▼
-┌───────────┐ ┌──────────┐ ┌──────────┐
-│   macOS   │ │ Windows  │ │  Linux   │
-├───────────┤ ├──────────┤ ├──────────┤
-│ osascript │ │PowerShell│ │ xdotool  │
-│ keystroke │ │ SendKeys │ │ydotool ↩ │
-└─────┬─────┘ └────┬─────┘ └────┬─────┘
-      └────────────┼────────────┘
-                   │
-                   ▼
-        ┌──────────────────────────────┐
-        │  Set clipboard  +  Cmd/Ctrl+V │
-        └──────────────┬───────────────┘
-                       │
-                       ▼
-        ┌──────────────────────────────┐
-        │  Target App receives paste ✓ │
-        └──────────────────────────────┘
-```
-
----
-
-## 🗂️ Repository Structure
-
-```
-scripts/paste-queue-app/
-├── 📄 README.md                    # This comprehensive documentation
-├── 📄 CONTRIBUTING.md              # Contribution guidelines & development workflow
-├── 📄 CHANGELOG.md                 # Version history & feature roadmap
-├── 📄 SECURITY.md                  # Security policies & disclosure procedures
-├── 📄 LICENSE                      # MIT License
-│
-├── 📄 package.json                 # Project manifest & Electron-builder config
-├── 📄 package-lock.json            # Locked dependency versions
-│
-├── 🎯 main.js                      # Electron main process
-│                                    #  • Clipboard monitoring loop
-│                                    #  • Platform-specific paste simulation
-│                                    #  • IPC request handlers
-│                                    #  • Window management
-│                                    #  • Position persistence
-│
-├── 🎨 index.html                   # Single-file UI (HTML + CSS + JS)
-│                                    #  • Dark glassmorphic theme
-│                                    #  • Queue rendering & animations
-│                                    #  • Keyboard shortcuts handler
-│                                    #  • Right-click context menus
-│
-├── 🔐 preload.js                   # Electron preload script
-│                                    #  • Secure IPC bridge via contextBridge
-│                                    #  • Exposes window.api for UI
-│                                    #  • No direct Node.js access in renderer
-│
-├── .github/
-│   ├── FUNDING.yml                 # Sponsorship configuration
-│   ├── dependabot.yml              # Automated dependency updates
-│   ├── workflows/
-│   │   ├── build.yml               # CI/CD: Multi-platform builds
-│   │   └── lint.yml                # CI/CD: Code quality & security checks
-│   ├── ISSUE_TEMPLATE/
-│   │   ├── bug_report.md           # Bug report template with platform matrix
-│   │   └── feature_request.md      # Feature request template
-│   └── pull_request_template.md    # PR checklist with platform/arch matrix
-│
-├── .gitignore                      # Git exclusions (node_modules, dist, etc.)
-│
-└── dist/                           # Build output (generated)
-    ├── Pastr-1.0.0-x64.dmg        # macOS Intel installer
-    ├── Pastr-1.0.0-arm64.dmg      # macOS Apple Silicon installer
-    ├── Pastr Setup 1.0.0-x64.exe   # Windows x86-64 installer
-    ├── Pastr-1.0.0-arm64.AppImage  # Linux ARM64 AppImage
-    └── ... (other platform builds)
-```
-
-### File Responsibilities
-
-| File | Lines | Purpose | Key Components |
-|------|-------|---------|-----------------|
-| **main.js** | ~450 | Electron main process | Clipboard polling, paste simulation, IPC, window mgmt |
-| **index.html** | ~400 | UI & frontend logic | Glassmorphic design, queue rendering, keyboard shortcuts |
-| **preload.js** | ~27 | Secure IPC bridge | contextBridge.exposeInMainWorld with API methods |
-| **package.json** | ~115 | Project config | Electron-builder config for 3 OS × 7 architectures |
-
----
-
-## 🚀 Installation & Quick Start
+## Quick Start
 
 ### Prerequisites
-- **Node.js** 18+ and npm (for development)
-- **macOS 10.12+** / **Windows 7+** / **Linux** (any modern distro)
-- On **macOS**: Grant Accessibility permission (System Preferences → Security & Privacy → Accessibility)
-- On **Linux**: Install `xdotool` → `sudo apt-get install xdotool`
+- **Node.js** 18+ and npm
+- On **macOS**: Grant Accessibility permission (System Settings > Privacy & Security > Accessibility)
+- On **Linux**: Install `xdotool` (`sudo apt-get install xdotool`)
 
-### Installation Steps
-
-#### Option 1: Download Pre-Built Binary
-Download the latest release for your platform from [GitHub Releases](https://github.com/omkarbhad/pastr-paste-queue-app/releases):
-- **macOS**: Download `.dmg` file for your processor (Intel or Apple Silicon)
-- **Windows**: Download `.exe` installer or portable `.exe`
-- **Linux**: Download `.AppImage` or `.deb` package
-
-#### Option 2: Build from Source
+### Install & Run
 
 ```bash
-# Clone the repository
-git clone https://github.com/omkarbhad/pastr-paste-queue-app.git
-cd pastr
-
-# Install dependencies
+git clone https://github.com/omkarbhad/repromptr.git
+cd repromptr
 npm install
-
-# Run in development mode
 npm start
+```
 
-# Build for current platform
-npm run build
+### Build
 
-# Build for all platforms & architectures
-npm run build:all
-
-# Build for specific platform
-npm run build:mac    # Intel + Apple Silicon universal
-npm run build:win    # x86-64, x86, ARM64
-npm run build:linux  # x86-64, ARM64, ARMv7 (Raspberry Pi)
+```bash
+npm run build          # Current platform
+npm run build:mac      # macOS (Intel + Apple Silicon)
+npm run build:win      # Windows (x64, x86, ARM64)
+npm run build:linux    # Linux (x64, ARM64, ARMv7)
+npm run build:all      # All platforms
 ```
 
 ---
 
-## ⌨️ Keyboard Shortcuts
+## AI Configuration
 
-| Shortcut | Action | Description |
-|----------|--------|-------------|
-| **Space** | Paste Next | Paste first item in queue and remove it (if auto-remove enabled) |
-| **Cmd+Z** (Mac) | Undo Deletion | Recover last deleted item |
-| **Ctrl+Z** (Win/Linux) | Undo Deletion | Recover last deleted item |
-| **Esc** | Hide Window | Minimize Pastr window |
+Click the gear icon in the Repromptr tab to open the config window, or edit `~/.repromptr-config` directly:
 
-### Mouse Actions
-- **Click item** — Paste immediately and close window
-- **Right-click item** — Context menu (Copy, Move to Top, Delete)
-- **Click trash icon** — Delete single item
-- **Click "Clear All"** — Empty entire queue (with confirmation)
-- **Click pin icon** — Toggle sticky/always-on-top mode
-
----
-
-## 🛠️ Usage Guide
-
-### Basic Workflow
-
-1. **Copy Anywhere** → Text appears in Pastr queue automatically
-2. **Sequential Paste** → Press Space repeatedly to paste items in order
-3. **Quick Paste** → Click any item to paste immediately
-4. **Manage Queue** → Right-click for options (copy, delete, reorder)
-5. **Auto-Clean** → Items automatically removed after pasting (configurable)
-
-### Advanced Usage
-
-#### Toggle Auto-Remove
-- Click the **trash icon** button in the title bar
-- When enabled (default): pasted items automatically deleted
-- When disabled: items stay in queue until manually removed
-
-#### Sticky Mode
-- Click the **pin icon** in title bar to lock window always-on-top
-- In sticky mode: window stays visible above all other windows
-- Click again to disable and allow normal window behavior
-
-#### Undo Deleted Items
-- Accidentally deleted an item? Press **Cmd+Z** or **Ctrl+Z** immediately
-- Recovers the last deleted item to the queue
-- Limited to recent deletions
-
-#### Context Menu (Right-Click)
-- **Copy** — Copy item text to clipboard without pasting
-- **Move to Top** — Prioritize item to front of queue
-- **Delete** — Remove item from queue
-
----
-
-## 📦 Technologies & Dependencies
-
-### Core Technologies
-- **Electron 33.4+** — Cross-platform desktop application framework
-- **Electron-builder 24.9+** — Multi-platform build & packaging tool
-- **Node.js 18+** — JavaScript runtime (development only)
-
-### No Runtime Dependencies
-The application ships with **only Electron** as a runtime dependency. No heavy frameworks, no jQuery, no React — pure vanilla JavaScript for a lightweight, fast, secure experience.
-
-### Frontend
-- **HTML5** — Semantic markup
-- **CSS3** — Glassmorphic design, animations, flexbox layouts
-- **Vanilla JavaScript** — No framework overhead
-- **Lucide Icons CDN** — Beautiful, consistent icon library
-
-### Native Integrations
-- **macOS:** AppleScript via `osascript` (built-in)
-- **Windows:** PowerShell (built-in) for clipboard automation
-- **Linux:** `xdotool` (external, user-installed) or `ydotool` (fallback)
-
-### Development Tools
-- **npm audit** — Security vulnerability scanning (CI/CD)
-- **GitHub Actions** — Automated testing & building
-- **Dependabot** — Automated dependency updates
-
----
-
-## 🔧 Configuration
-
-### Window Configuration (main.js)
-
-```javascript
-const window = new BrowserWindow({
-  width: 320,
-  height: 480,
-  minWidth: 280,
-  minHeight: 200,
-  frame: false,                    // Frameless for custom title bar
-  transparent: true,               // Transparent background
-  alwaysOnTop: true,               // Default sticky mode
-  type: "panel",                   // Prevent focus stealing
-  webPreferences: {
-    contextIsolation: true,        // ✅ Secure: isolate main/renderer
-    nodeIntegration: false,        // ✅ Secure: no Node.js in renderer
-    preload: preload.js            // ✅ Secure: bridge via preload
-  }
-});
-```
-
-### Clipboard Configuration (main.js)
-
-```javascript
-const MAX_ITEMS = 30;              // Maximum items in queue
-const POLL_INTERVAL = 1000;        // Check clipboard every 1000ms
-const IGNORE_TIMEOUT = 400;        // Ignore self-triggered copies
-```
-
-### Theme Customization (index.html CSS Variables)
-
-```css
-:root {
-  --bg:          #0a0a0e;         /* Main background */
-  --bg-card:     #161620;         /* Card/item background */
-  --accent:      #7c6cf0;         /* Primary accent (purple) */
-  --green:       #34d399;         /* Success/paste color */
-  --red:         #f87171;         /* Delete/danger color */
-  --text:        rgba(255,255,255,0.92);  /* Primary text */
-  --text2:       rgba(255,255,255,0.50);  /* Secondary text */
+```json
+{
+  "provider": "openai",
+  "apiKey": "sk-...",
+  "model": "gpt-4o-mini",
+  "baseUrl": "",
+  "systemPrompt": ""
 }
 ```
 
----
+### Supported Providers
 
-## ✅ Requirements & Platform Support
+| Provider | Default Model | Notes |
+|----------|--------------|-------|
+| **OpenAI** | `gpt-4o-mini` | Standard OpenAI API |
+| **Claude** | `claude-haiku-4-5-20251001` | Anthropic API |
+| **OpenRouter** | `openai/gpt-4o-mini` | Multi-provider gateway |
+| **Custom** | (user-defined) | Any OpenAI-compatible endpoint |
 
-### System Requirements
+### Style Presets
 
-| OS | Version | Architectures | Status |
-|-----|---------|---|----------|
-| **macOS** | 10.12+ | Intel (x64), Apple Silicon (arm64) | ✅ Fully Supported |
-| **Windows** | 7+ | x86-64, x86 (32-bit), ARM64 | ✅ Fully Supported |
-| **Linux** | Any modern | x86-64, ARM64, ARMv7 (Raspberry Pi) | ✅ Fully Supported |
-
-### Processor Support
-- ✅ **Intel x86-64** — Traditional laptop/desktop processors
-- ✅ **Apple Silicon** — M1, M2, M3 and newer Macs
-- ✅ **ARM64** — Modern ARM servers, some Windows devices
-- ✅ **ARMv7** — Raspberry Pi 2+ and older ARM boards
-- ✅ **x86 32-bit** — Legacy Windows systems
-
-### Permission Requirements
-
-**macOS:**
-- Accessibility permission required for keystroke simulation
-- Auto-prompted on first paste attempt
-- Grant in: System Preferences → Security & Privacy → Accessibility
-
-**Windows:**
-- PowerShell execution required (built-in on all modern Windows)
-- No special permissions needed
-
-**Linux:**
-- `xdotool` package required: `sudo apt-get install xdotool`
-- Fallback to `ydotool` if `xdotool` unavailable
-- For Wayland: ensure `xdotool` works on your desktop
+| Chip | What It Does |
+|------|-------------|
+| **Improve** | General clarity and quality improvements |
+| **Formal** | Professional, formal tone |
+| **Concise** | Shorter, to the point |
+| **Expand** | More detail and context |
+| **Grammar** | Corrects only grammar/spelling errors, preserves everything else |
 
 ---
 
-## 🤝 Contributing
+## Keyboard Shortcuts
 
-### Getting Started
+| Shortcut | Action |
+|----------|--------|
+| **Space** | Paste next item from queue |
+| **Cmd+V** / **Ctrl+V** | Paste next item from queue |
+| **Cmd+Z** / **Ctrl+Z** | Undo last deletion |
+| **Esc** | Hide window |
 
-1. **Fork** the repository on GitHub
-2. **Clone** your fork locally:
-   ```bash
-   git clone https://github.com/YOUR-USERNAME/pastr.git
-   cd pastr
-   ```
-3. **Install** dependencies:
-   ```bash
-   npm install
-   ```
-4. **Create** a feature branch:
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-5. **Run** in development:
-   ```bash
-   npm start
-   ```
-
-### Development Workflow
-
-- **Code Style:** JavaScript, single quotes, semicolons
-- **Testing:** Test on at least 2 platforms (macOS, Windows, or Linux)
-- **Commits:** Descriptive messages following `Type: Description` format
-  - Example: `feat: add paste undo functionality`
-  - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`
-
-### Before Submitting PR
-
-- ✅ Test on your platform(s)
-- ✅ Run `npm run build` — ensure no build errors
-- ✅ Check `.github/workflows/lint.yml` passes locally
-- ✅ Update documentation if adding features
-- ✅ Add yourself to the acknowledgements if desired
-
-### Architecture Guidelines
-
-- **Minimal dependencies** — Use only Electron, no heavy frameworks
-- **Vanilla JavaScript** — Keep code simple and maintainable
-- **Platform abstraction** — Use platform detection constants for OS-specific code
-- **Security first** — Context isolation, no eval, input validation
-- **Performance** — Optimize clipboard polling, avoid redundant renders
-
-### Common Contributions
-
-- **Bug fixes** — Always welcome
-- **Platform-specific fixes** — Especially Linux improvements
-- **Performance optimizations** — Reduced CPU/memory usage
-- **UI enhancements** — Better animations, accessibility
-- **Documentation** — Clarifying code, adding examples
-- **Localization** — Translations for non-English users
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+### Mouse Actions
+- **Click item** — Paste immediately (removes from queue)
+- **Right-click item** — Context menu: Copy, Move to Top, Save as Prompt, Send to Repromptr, Delete
+- **Click trash icon** — Delete single item
+- **Click pin icon** — Toggle always-on-top
 
 ---
 
-## 🔐 Security
+## How It Works
 
-### Security Architecture
-- ✅ **Context Isolation** — Main and renderer processes completely isolated
-- ✅ **No Node Integration** — Node.js APIs not accessible from UI
-- ✅ **Preload Security** — Secure bridge via preload script only
-- ✅ **No eval()** — No dynamic code execution
-- ✅ **Input Validation** — All clipboard items validated before storage
-- ✅ **Clipboard Size Limits** — Items truncated at 50KB to prevent DoS
-
-### Data Safety
-- 🔒 **No Cloud Storage** — Clipboard stays local to your machine
-- 🔒 **No Tracking** — No analytics, no telemetry, no ads
-- 🔒 **No Accounts** — No login, no user data collection
-- 🔒 **No Network** — Application never connects to the internet
-- 🔒 **Optional Persistence** — Clipboard items not saved to disk by default
-
-### Reporting Security Issues
-If you discover a security vulnerability, **please do not open a public issue.** Instead, email [security@pastr.local](mailto:security@pastr.local) with:
-1. Description of the vulnerability
-2. Steps to reproduce
-3. Potential impact
-4. Suggested fix (if available)
-
-See [SECURITY.md](SECURITY.md) for full security policy and responsible disclosure timeline.
-
----
-
-## 🐛 Troubleshooting
-
-### Paste Not Working?
-
-**macOS:**
-- Ensure Accessibility permission granted: System Preferences → Security & Privacy → Accessibility
-- Check Pastr is in the list (add it if missing)
-- Restart the application
-
-**Windows:**
-- Ensure PowerShell is available and accessible
-- Try running as administrator
-- Check Windows Defender isn't blocking clipboard access
-
-**Linux:**
-- Install xdotool: `sudo apt-get install xdotool`
-- For Wayland, install `ydotool`: `sudo apt-get install ydotool`
-- Ensure xdotool/ydotool can access your display
-
-### Window Position Not Saved?
-
-Delete the position cache file and restart:
-```bash
-rm ~/.pastr-window-pos
-# Restart Pastr
+```
+┌──────────────────────────────────────────────────┐
+│ Main Process (main.js)                           │
+│  - Clipboard polling (800ms interval)            │
+│  - AI streaming (OpenAI / Claude / OpenRouter)   │
+│  - Paste simulation (osascript / PowerShell /    │
+│    xdotool)                                      │
+│  - Window management, tray icon                  │
+│  - Config & prompts persistence (~/.repromptr-*)     │
+├──────────────────────────────────────────────────┤
+│ Preload (preload.js)                             │
+│  - Secure IPC bridge via contextBridge           │
+├──────────────────────────────────────────────────┤
+│ Renderer (index.html + config.html)              │
+│  - Three-tab UI: Repromptr, Queue, Saved         │
+│  - Streaming typing animation (requestAF)        │
+│  - Thinking indicator + style chips              │
+│  - Context menu, keyboard shortcuts              │
+└──────────────────────────────────────────────────┘
 ```
 
-### Clipboard Monitoring Not Working?
+### Paste Flow
+1. User clicks an item or presses Space
+2. Main process writes text to system clipboard
+3. Window goes invisible (`setOpacity(0)`) and releases focus (`setFocusable(false)`)
+4. Platform-specific keystroke simulation (Cmd+V / Ctrl+V)
+5. Window restores visibility; item removed from queue
 
-- Ensure `npm install` completed successfully
-- Check Node modules aren't corrupted: `rm -rf node_modules && npm install`
-- Verify Electron installation: `npx electron --version`
-
-### High CPU Usage?
-
-- Check clipboard polling interval (default 1000ms)
-- Close other clipboard manager apps that might conflict
-- Report the issue with platform/architecture details
-
-### Application Crashes?
-
-1. Check system logs: `tail -100 ~/.Pastr/error.log` (if available)
-2. Try rebuilding: `npm install && npm start`
-3. Update to latest version
-4. Open an issue with platform, architecture, and error details
-
-### Keyboard Shortcuts Not Working?
-
-- Ensure application window has focus (click title bar)
-- Check if another app is hijacking shortcuts (disable temporarily)
-- Verify keyboard layout supports modifier keys (Cmd, Ctrl, etc.)
-
-See [SECURITY.md](SECURITY.md) for more known limitations and solutions.
+### AI Streaming Flow
+1. User enters text, selects a style chip, clicks Enhance
+2. Main process sends request to AI provider via `https`
+3. Server-sent events (SSE) are parsed and forwarded to renderer
+4. Renderer buffers characters and drains them via `requestAnimationFrame` at ~120 chars/sec
+5. Thinking spinner shown until first token arrives
 
 ---
 
-## 📝 Development Changelog
+## Files
 
-### v1.0.0 (Current)
-- ✨ Multi-platform release (macOS, Windows, Linux)
-- ✨ Cross-architecture support (Intel, ARM, 32-bit)
-- ✨ Beautiful glassmorphic UI with dark theme
-- 🔄 Sequential paste with Space key
-- 🗑️ Auto-remove after pasting (configurable)
-- ⌘Z Undo for deleted items
-- 💾 Window position memory
-- 🔐 Secure Electron architecture with context isolation
-- 🚀 Optimized performance (1000ms polling, smart deduplication)
-- 🎯 Comprehensive CI/CD with GitHub Actions
+| File | Purpose |
+|------|---------|
+| `main.js` | Electron main process — clipboard, AI, paste, IPC, tray |
+| `index.html` | Single-file UI (HTML + CSS + JS) |
+| `preload.js` | Secure IPC bridge |
+| `config.html` | AI settings window |
+| `repromptr_logo.png` | App icon |
+| `package.json` | Project config + electron-builder config |
 
-### Future Roadmap
-- 🎯 Search/filter functionality within queue
-- 🎯 Clipboard item preview (markdown, code formatting)
-- 🎯 Keyboard shortcuts customization
-- 🎯 Sync between devices (optional)
-- 🎯 Item categorization & tags
-- 🎯 Favorites & frequently used items
-- 🎯 Rich text & image clipboard support
-
-See [CHANGELOG.md](CHANGELOG.md) for full version history.
+### Data Files (auto-created in `~/`)
+- `~/.repromptr-config` — AI provider settings
+- `~/.repromptr-prompts` — Saved prompts
+- `~/.repromptr-window-pos` — Window position
 
 ---
 
-## ❤️ Acknowledgements
+## Platform Support
 
-- **Lucide Icons** — Beautiful icon library used in the UI
-- **Electron** — Enabling cross-platform desktop development
-- **Electron-builder** — Simplifying multi-platform builds
-- **Community** — Thanks to all contributors and users
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License** — see [LICENSE](LICENSE) file for details.
-
-You're free to use, modify, and distribute Pastr for any purpose, commercial or otherwise.
+| OS | Architectures | Paste Method |
+|----|--------------|-------------|
+| **macOS** 10.12+ | Intel (x64), Apple Silicon (arm64) | AppleScript `osascript` |
+| **Windows** 7+ | x64, x86, ARM64 | PowerShell `SendKeys` |
+| **Linux** | x64, ARM64, ARMv7 | `xdotool` (fallback: `ydotool`) |
 
 ---
 
-## 🔗 Quick Links
+## Troubleshooting
 
-- 📦 **Releases:** https://github.com/omkarbhad/pastr-paste-queue-app/releases
-- 🐛 **Issue Tracker:** https://github.com/omkarbhad/pastr-paste-queue-app/issues
-- 🤝 **Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md)
-- 🔐 **Security:** [SECURITY.md](SECURITY.md)
-- 📋 **Changelog:** [CHANGELOG.md](CHANGELOG.md)
+**Paste not working on macOS?**
+Grant Accessibility permission: System Settings > Privacy & Security > Accessibility. Add the app if missing, then restart.
+
+**Paste not working on Linux?**
+Install xdotool: `sudo apt-get install xdotool`. For Wayland, try `ydotool`.
+
+**AI not responding?**
+Check your API key and provider in the config window. Ensure you have API credits.
+
+**Window position reset?**
+Delete `~/.repromptr-window-pos` and restart.
 
 ---
 
-**Built with ❤️ by Omkar Bhad**
+## Contributing
 
-*Last Updated: February 2026*
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for security policy. API keys are stored locally and never sent anywhere except to your configured AI provider.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history.
+
+## License
+
+MIT — see [LICENSE](LICENSE) for details.
+
+---
+
+**Built by Omkar Bhad**

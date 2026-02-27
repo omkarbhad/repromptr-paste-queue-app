@@ -37,6 +37,7 @@ Thumbs.db
 # Electron
 .electron-gyp/
 
-# Window position file
-.pastr-window-pos
-~/.pastr-window-pos
+# App data files (auto-created in ~/)
+.repromptr-window-pos
+.repromptr-prompts
+.repromptr-config

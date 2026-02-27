@@ -2,7 +2,7 @@
 
 ## Reporting Security Issues
 
-If you discover a security vulnerability in Pastr, please open a [GitHub Security Advisory](https://github.com/omkarbhad/pastr-paste-queue-app/security/advisories/new) with:
+If you discover a security vulnerability in Repromptr, please open a [GitHub Security Advisory](https://github.com/omkarbhad/repromptr/security/advisories/new) with:
 
 1. Description of the vulnerability
 2. Steps to reproduce
@@ -11,95 +11,51 @@ If you discover a security vulnerability in Pastr, please open a [GitHub Securit
 
 **Please do not open public issues for security vulnerabilities.**
 
-We will acknowledge receipt of your report within 48 hours and provide you with a status update.
+We will acknowledge receipt within 48 hours.
 
 ## Security Practices
 
-### Code Security
-- **Context Isolation**: All Electron IPC uses context isolation
-- **No Node Integration**: Node.js is not integrated into renderer process
-- **Preload Scripts**: Secure IPC bridge via preload script
+### Electron Security
+- **Context Isolation**: All IPC uses context isolation
+- **No Node Integration**: Node.js is not accessible from the renderer process
+- **Preload Scripts**: Secure IPC bridge via preload script only
 - **No Eval**: No `eval()` or dynamic code execution
-- **Input Validation**: All clipboard items are validated
+
+### Data Safety
+- **Local Only**: Clipboard data stays on your machine
+- **No Tracking**: No analytics, no telemetry
+- **No Accounts**: No login or data collection
+- **AI API Calls**: API keys stored locally in `~/.repromptr-config`; requests go directly to your configured provider (OpenAI, Anthropic, OpenRouter, or custom)
 
 ### Clipboard Safety
-- **Size Limits**: Clipboard items truncated at 50KB to prevent DoS
-- **No Rich Text**: Plain text only (no code execution vectors)
-- **No Persistence**: Clipboard not saved to disk by default
-- **Local Only**: No network communication
+- **Size Limits**: Items truncated at 50KB
+- **Plain Text Only**: No code execution vectors
+- **Queue in Memory**: Clipboard queue not persisted to disk
 
-### Updates
-- **No Auto-Update**: Users install updates manually
-- **Signed Releases**: (Planned) Releases will be cryptographically signed
-- **Transparency**: All changes logged in CHANGELOG
+## API Key Security
 
-### Dependencies
-- **Minimal Dependencies**: Only Electron required
-- **Regular Updates**: Dependabot checks for updates weekly
-- **Audit**: `npm audit` checked in CI/CD
-
-## Known Limitations
-
-1. **Accessibility Permissions (macOS)**: Paste simulation requires Accessibility access
-2. **PowerShell (Windows)**: Uses PowerShell which some corporate networks may restrict
-3. **X11/Wayland (Linux)**: xdotool may not work on Wayland; ydotool recommended
+- API keys are stored in `~/.repromptr-config` as plain JSON
+- Keys are never sent anywhere except to the configured AI provider endpoint
+- Keys are never logged or transmitted to third parties
+- Consider using file permissions to protect the config file: `chmod 600 ~/.repromptr-config`
 
 ## Disclosure Timeline
 
-We follow responsible disclosure:
 1. **Day 0**: Report received
 2. **Day 1**: Acknowledgment sent
 3. **Day 7**: Initial assessment
 4. **Day 30**: Patch release planned
-5. **Day 90**: Public disclosure (if not already patched)
+5. **Day 90**: Public disclosure
 
 ## Version Support
 
-| Version | Status | Support Until |
-|---------|--------|---------------|
-| 1.x | Active | Current |
-| 0.x | EOL | Not supported |
+| Version | Status |
+|---------|--------|
+| 2.x | Active |
+| 1.x | EOL |
 
-Only the latest version receives security updates. We recommend updating immediately when security patches are released.
-
-## Security Headers
-
-### Electron Configuration
-- `contextIsolation: true` - Isolate main and renderer processes
-- `nodeIntegration: false` - Disable Node.js in renderer
-- `preload: preload.js` - Secure IPC bridge
-
-### Content Security
-- No inline scripts
-- All scripts from local files
-- No external resource loading
-
-## Third-Party Security
-
-### Electron
-- Uses official Electron releases
-- Automatically inherits Chromium security updates
-- Regularly updated (see dependabot.yml)
-
-### Icons
-- Lucide icons loaded from CDN (minimal trust surface)
-- Icon loading is isolated in UI layer
-
-## Security Audit
-
-We welcome security audits. If you're interested in auditing Pastr's security:
-1. Review the security practices above
-2. Check the codebase for common vulnerabilities
-3. Test on your platform/architecture
-4. Report findings responsibly
-
-## Support
-
-For security-related questions (non-vulnerability):
-- Check our FAQ
-- Review the source code
-- Open a private discussion
+Only the latest version receives security updates.
 
 ---
 
-Thank you for helping keep Pastr secure! 🔒
+Thank you for helping keep Repromptr secure!

@@ -1,21 +1,20 @@
-# Contributing to Pastr
+# Contributing to Repromptr
 
-Thank you for your interest in contributing to Pastr! We welcome contributions from everyone.
+Thank you for your interest in contributing to Repromptr! We welcome contributions from everyone.
 
 ## Code of Conduct
 
 - Be respectful and inclusive
 - Welcome diverse perspectives
 - Focus on the code, not the person
-- Report inappropriate behavior
 
 ## Getting Started
 
 1. **Fork the repository** on GitHub
 2. **Clone your fork**:
    ```bash
-   git clone https://github.com/YOUR-USERNAME/pastr.git
-   cd pastr/scripts/paste-queue-app
+   git clone https://github.com/YOUR-USERNAME/repromptr.git
+   cd repromptr
    ```
 3. **Install dependencies**:
    ```bash
@@ -35,21 +34,22 @@ npm start
 
 ### Building for Distribution
 ```bash
-# Your platform
-npm run build
-
-# All platforms
-npm run build:all
+npm run build          # Current platform
+npm run build:mac      # macOS
+npm run build:win      # Windows
+npm run build:linux    # Linux
+npm run build:all      # All platforms
 ```
 
 ### Project Structure
 ```
-scripts/paste-queue-app/
+repromptr/
 ├── main.js           # Electron main process
 ├── preload.js        # Secure IPC bridge
 ├── index.html        # UI and frontend logic
-├── package.json      # Dependencies and build config
-└── README.md         # Documentation
+├── config.html       # AI config window
+├── repromptr_logo.png
+└── package.json      # Dependencies and build config
 ```
 
 ## Making Changes
@@ -60,102 +60,48 @@ scripts/paste-queue-app/
 - Follow the existing code style
 
 ### Code Style
-- Use consistent indentation (2 spaces)
-- Use meaningful variable names
-- Add comments for complex logic
-- Keep functions focused and small
-
-### Commits
-- Write clear commit messages
-- Keep commits focused and atomic
-- Use present tense: "Add feature" not "Added feature"
+- 2-space indentation
+- Meaningful variable names
+- Comments only for non-obvious logic
 
 ### Testing Your Changes
-- Test on multiple platforms if possible:
-  - macOS (Intel or Apple Silicon)
-  - Windows (x86-64 or ARM64)
-  - Linux (Debian/Ubuntu, Fedora, or ARM)
-- Test keyboard shortcuts work
+- Test on multiple platforms if possible
+- Test keyboard shortcuts
 - Test paste functionality
-- Test edge cases (empty queue, large clipboard items, etc.)
+- Test AI streaming with at least one provider
 
 ## Submitting Changes
 
-### Pull Request Process
 1. **Push to your fork**:
    ```bash
    git push origin feature/your-feature-name
    ```
-
-2. **Create a Pull Request** on GitHub with:
+2. **Create a Pull Request** with:
    - Clear title describing the change
    - Description of what and why
    - Platform(s) tested
    - Screenshots if UI changes
-
 3. **Address feedback** from reviewers
-
-4. **Ensure CI passes** (GitHub Actions)
-
-### Pull Request Guidelines
-- Describe the problem you're solving
-- Reference related issues
-- Test on at least one platform
-- Update documentation if needed
-- Keep commits organized
 
 ## Areas for Contribution
 
-### Easy (Good for beginners)
-- Documentation improvements
 - Bug fixes
-- UI/UX improvements
-- Error message clarity
-- README examples
-
-### Medium
-- New keyboard shortcuts
+- Platform-specific improvements (especially Linux/Wayland)
 - Performance optimizations
-- Platform-specific improvements
-- Testing infrastructure
-
-### Advanced
-- New major features
-- Architecture changes
-- Cross-platform compatibility
-- Performance profiling
+- UI/UX enhancements
+- New AI provider integrations
+- Documentation improvements
 
 ## Reporting Bugs
 
-Use the [Bug Report](https://github.com/pastr/pastr/issues/new?template=bug_report.md) template with:
+Use the [Bug Report](https://github.com/omkarbhad/repromptr/issues/new?template=bug_report.md) template with:
 1. Your OS and version
-2. Exact steps to reproduce
+2. Steps to reproduce
 3. Expected vs actual behavior
 4. Error messages or screenshots
-
-## Suggesting Features
-
-Use the [Feature Request](https://github.com/pastr/pastr/issues/new?template=feature_request.md) template with:
-1. The problem you're solving
-2. Your proposed solution
-3. Alternative approaches
-4. Which platforms this affects
-
-## Questions?
-
-- Check the [README](README.md) and troubleshooting section first
-- Open a discussion issue
-- Join our community
 
 ## License
 
 By contributing, you agree your code will be licensed under the MIT License (see [LICENSE](LICENSE)).
 
-## Recognition
-
-Contributors will be recognized in:
-- Release notes for significant contributions
-- Contributors section of README
-- GitHub contributors page
-
-Thank you for making Pastr better! 🎉
+Thank you for making Repromptr better!

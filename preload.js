@@ -17,9 +17,6 @@ contextBridge.exposeInMainWorld("api", {
   moveToTop: (text) => ipcRenderer.invoke("move-to-top", text),
   clearAll: () => ipcRenderer.invoke("clear-all"),
 
-  // Auto-remove toggle
-  setAutoRemove: (enabled) => ipcRenderer.invoke("set-auto-remove", enabled),
-
   // Window controls
   toggleSticky: (sticky) => ipcRenderer.invoke("toggle-sticky", sticky),
   minimizeApp: () => ipcRenderer.invoke("minimize-app"),
@@ -29,5 +26,14 @@ contextBridge.exposeInMainWorld("api", {
   getPrompts:   ()     => ipcRenderer.invoke("get-prompts"),
   savePrompt:   (text) => ipcRenderer.invoke("save-prompt", text),
   deletePrompt: (id)   => ipcRenderer.invoke("delete-prompt", id),
-  usePrompt:    (text) => ipcRenderer.invoke("use-prompt", text),
+  // Reprompt / AI config
+  getConfig:        ()           => ipcRenderer.invoke("get-config"),
+  saveConfig:       (cfg)        => ipcRenderer.invoke("save-config", cfg),
+  reprompt:         (text, inst) => ipcRenderer.invoke("reprompt", text, inst),
+  onRepromptStream: (cb) => {
+    ipcRenderer.removeAllListeners("reprompt-stream");
+    ipcRenderer.on("reprompt-stream", (_e, msg) => cb(msg));
+  },
+  setFocusable:     (v)          => ipcRenderer.invoke("set-focusable", v),
+  openConfigWindow: ()           => ipcRenderer.invoke("open-config-window"),
 });

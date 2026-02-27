@@ -1,20 +1,16 @@
 const { app, BrowserWindow, clipboard, ipcMain, Tray, nativeImage } = require("electron");
 const path = require("path");
-const { execFile, execSync } = require("child_process");
+const fs = require("fs");
+const { execFile } = require("child_process");
 const os = require("os");
+const https = require("https");
 
 // ── Cross-Platform Detection ────────────────────────────────────────
-const PLATFORM = process.platform; // 'darwin', 'win32', 'linux'
-const ARCH = process.arch; // 'x64', 'arm64', 'ia32', etc.
+const PLATFORM = process.platform;
 const IS_MAC = PLATFORM === "darwin";
 const IS_WIN = PLATFORM === "win32";
 const IS_LINUX = PLATFORM === "linux";
-const IS_ARM = ARCH === "arm64" || ARCH === "arm";
-const IS_X86 = ARCH === "x64" || ARCH === "ia32";
-
 // ── CRITICAL: call dock.hide() at module load time (before whenReady) ──
-// This sets activation policy to "accessory" immediately, so the app never
-// steals focus from other applications — not even on the very first click.
 if (IS_MAC) {
   app.dock.hide();
 }
@@ -25,36 +21,29 @@ let clipboardHistory = [];
 let lastClipboard = "";
 let ignoreClipboard = false;
 let pollInterval;
-let autoRemove = true;
 const MAX_ITEMS = 30;
 
 let savedPrompts = [];
-const PROMPTS_FILE = path.join(os.homedir(), ".pastr-prompts");
+let aiConfig = { provider: "openai", apiKey: "", model: "gpt-4o-mini", baseUrl: "", systemPrompt: "" };
+const PROMPTS_FILE = path.join(os.homedir(), ".repromptr-prompts");
+const POS_FILE = path.join(os.homedir(), ".repromptr-window-pos");
+const CONFIG_FILE = path.join(os.homedir(), ".repromptr-config");
 
 // ── Window Position Persistence ───────────────────────────────────
 
 function saveWindowPosition() {
-  if (win) {
-    const [x, y] = win.getPosition();
-    try {
-      require("fs").writeFileSync(
-        require("path").join(require("os").homedir(), ".pastr-window-pos"),
-        JSON.stringify({ x, y })
-      );
-    } catch (e) {
-      // Silently fail if unable to save position
-    }
-  }
+  if (!win || win.isDestroyed()) return;
+  const [x, y] = win.getPosition();
+  try { fs.writeFileSync(POS_FILE, JSON.stringify({ x, y })); } catch (e) { }
 }
 
 function loadWindowPosition() {
   try {
-    const data = require("fs").readFileSync(
-      require("path").join(require("os").homedir(), ".pastr-window-pos"),
-      "utf-8"
-    );
-    const pos = JSON.parse(data);
-    return { x: pos.x || undefined, y: pos.y || undefined };
+    const pos = JSON.parse(fs.readFileSync(POS_FILE, "utf-8"));
+    return {
+      x: typeof pos.x === "number" ? pos.x : undefined,
+      y: typeof pos.y === "number" ? pos.y : undefined,
+    };
   } catch (e) {
     return { x: undefined, y: undefined };
   }
@@ -63,39 +52,32 @@ function loadWindowPosition() {
 // ── Saved Prompts Persistence ─────────────────────────────────────
 
 function loadPrompts() {
-  try {
-    savedPrompts = JSON.parse(require("fs").readFileSync(PROMPTS_FILE, "utf-8"));
-  } catch (e) {
-    savedPrompts = [];
-  }
+  try { savedPrompts = JSON.parse(fs.readFileSync(PROMPTS_FILE, "utf-8")); }
+  catch (e) { savedPrompts = []; }
 }
 
 function savePrompts() {
+  try { fs.writeFileSync(PROMPTS_FILE, JSON.stringify(savedPrompts)); } catch (e) { }
+}
+
+// ── AI Config Persistence ──────────────────────────────────────────
+
+function loadConfig() {
   try {
-    require("fs").writeFileSync(PROMPTS_FILE, JSON.stringify(savedPrompts));
-  } catch (e) {}
+    const saved = JSON.parse(fs.readFileSync(CONFIG_FILE, "utf-8"));
+    aiConfig = { ...aiConfig, ...saved };
+  } catch (e) { }
+}
+
+function saveConfig() {
+  try { fs.writeFileSync(CONFIG_FILE, JSON.stringify(aiConfig)); } catch (e) { }
 }
 
 // ── Tray icon ─────────────────────────────────────────────────────
 
 function makeTrayIcon() {
-  const size = 22;
-  const buf = Buffer.alloc(size * size * 4, 0);
-  const set = (x, y) => {
-    if (x < 0 || x >= size || y < 0 || y >= size) return;
-    const i = (y * size + x) * 4;
-    buf[i] = buf[i + 1] = buf[i + 2] = 0;
-    buf[i + 3] = 255;
-  };
-  for (let x = 3; x <= 18; x++) { set(x, 4); set(x, 20); }
-  for (let y = 5; y <= 19; y++) { set(3, y); set(18, y); }
-  for (let x = 8; x <= 13; x++) { set(x, 2); set(x, 5); }
-  set(8, 3); set(8, 4); set(13, 3); set(13, 4);
-  for (let x = 6; x <= 15; x++) { set(x, 9); set(x, 13); }
-  for (let x = 6; x <= 12; x++) { set(x, 17); }
-  const img = nativeImage.createFromBuffer(buf, { width: size, height: size });
-  img.setTemplateImage(true);
-  return img;
+  const img = nativeImage.createFromPath(path.join(__dirname, "repromptr_logo.png"));
+  return img.resize({ width: 22, height: 22 });
 }
 
 // ── Window ────────────────────────────────────────────────────────
@@ -103,10 +85,9 @@ function makeTrayIcon() {
 function createWindow() {
   const savedPosition = loadWindowPosition();
 
-  // Platform-specific window options
   const windowOptions = {
-    width: 300,
-    height: 420,
+    width: 320,
+    height: 440,
     x: savedPosition.x,
     y: savedPosition.y,
     frame: false,
@@ -115,6 +96,7 @@ function createWindow() {
     focusable: false,
     resizable: true,
     hasShadow: true,
+    skipTaskbar: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -122,35 +104,38 @@ function createWindow() {
     },
   };
 
-  // macOS supports panel type for better focus handling
   if (IS_MAC) {
     windowOptions.type = "panel";
   }
 
   win = new BrowserWindow(windowOptions);
   win.loadFile("index.html");
+  win.webContents.setBackgroundThrottling(false);
 
-  // macOS: use highest z-level, others: use standard alwaysOnTop
   if (IS_MAC) {
     win.setAlwaysOnTop(true, "screen-saver");
   } else {
     win.setAlwaysOnTop(true, "floating");
   }
 
-  // Save position on move
   win.on("moved", saveWindowPosition);
+  win.on("close", saveWindowPosition);
 
   lastClipboard = clipboard.readText() || "";
-  pollInterval = setInterval(checkClipboard, 1000);
+  pollInterval = setInterval(checkClipboard, 800);
 }
 
 function createTray() {
-  tray = new Tray(makeTrayIcon());
-  tray.setToolTip("Pastr — click to show/hide");
-  tray.on("click", () => {
+  const icon = makeTrayIcon();
+  tray = new Tray(icon);
+  if (IS_MAC) app.dock.setIcon(nativeImage.createFromPath(path.join(__dirname, "repromptr_logo.png")));
+  tray.setToolTip("Repromptr — click to show/hide");
+  const toggleWin = () => {
     if (!win || win.isDestroyed()) return;
     win.isVisible() ? win.hide() : win.show();
-  });
+  };
+  tray.on("click", toggleWin);
+  tray.on("double-click", toggleWin);
 }
 
 // ── Clipboard monitoring ─────────────────────────────────────────
@@ -165,19 +150,14 @@ function checkClipboard() {
 }
 
 function addToHistory(text) {
-  // Limit item size to 50KB to prevent memory bloat
   if (text.length > 50000) {
-    console.warn("Clipboard item too large, truncating");
     text = text.slice(0, 50000);
   }
-
   const idx = clipboardHistory.indexOf(text);
-  if (idx === 0) return; // Already at top, skip
-  if (idx > 0) clipboardHistory.splice(idx, 1); // Remove from wherever it is
+  if (idx === 0) return;
+  if (idx > 0) clipboardHistory.splice(idx, 1);
   clipboardHistory.unshift(text);
-  if (clipboardHistory.length > MAX_ITEMS) {
-    clipboardHistory.pop(); // Faster than slice
-  }
+  if (clipboardHistory.length > MAX_ITEMS) clipboardHistory.pop();
   if (win && !win.isDestroyed()) {
     win.webContents.send("clipboard-update", clipboardHistory);
   }
@@ -188,7 +168,6 @@ function addToHistory(text) {
 function simulatePaste() {
   return new Promise((resolve, reject) => {
     if (IS_MAC) {
-      // macOS: Use osascript to send Cmd+V (works on all Macs: Intel, M1, M2, etc.)
       execFile(
         "osascript",
         ["-e", 'tell application "System Events" to keystroke "v" using command down'],
@@ -199,7 +178,6 @@ function simulatePaste() {
         }
       );
     } else if (IS_WIN) {
-      // Windows: Use PowerShell to send Ctrl+V (works on all Windows versions & architectures)
       execFile(
         "powershell.exe",
         ["-NoProfile", "-Command", "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^v')"],
@@ -210,29 +188,33 @@ function simulatePaste() {
         }
       );
     } else if (IS_LINUX) {
-      // Linux: Try xdotool first, fall back to other methods
       execFile("xdotool", ["key", "ctrl+v"], { timeout: 3000 }, (err) => {
-        if (!err) {
-          resolve();
-        } else {
-          // Fallback for systems without xdotool: try wmctrl or ydotool
-          tryLinuxFallback(resolve, reject);
-        }
+        if (!err) { resolve(); return; }
+        execFile("ydotool", ["key", "ctrl+v"], { timeout: 3000 }, (err2) => {
+          if (!err2) { resolve(); return; }
+          reject(new Error("Neither xdotool nor ydotool available. Install: sudo apt-get install xdotool"));
+        });
       });
+    } else {
+      reject(new Error(`Unsupported platform: ${PLATFORM}`));
     }
   });
 }
 
-function tryLinuxFallback(resolve, reject) {
-  // Try ydotool (xdotool alternative)
-  execFile("ydotool", ["key", "ctrl+v"], { timeout: 3000 }, (err) => {
-    if (!err) {
-      resolve();
-    } else {
-      // Final fallback: use keyboard event injection if available
-      reject(new Error("Neither xdotool nor ydotool available. Install: sudo apt-get install xdotool"));
-    }
-  });
+// ── Paste helpers ────────────────────────────────────────────────
+// Make window invisible + release focus so the target app receives Cmd+V.
+// setOpacity(0) is instant (no hide/show animation = no blink).
+// setFocusable(false) + blur() actually releases keyboard focus.
+function pasteDeactivate() {
+  if (!win || win.isDestroyed()) return;
+  win.setOpacity(0);
+  win.setFocusable(false);
+  win.blur();
+}
+function pasteReactivate() {
+  if (!win || win.isDestroyed()) return;
+  win.setOpacity(1);
+  // focusable state is restored by the renderer via setFocusable IPC
 }
 
 // ── IPC Handlers ─────────────────────────────────────────────────
@@ -240,7 +222,10 @@ function tryLinuxFallback(resolve, reject) {
 ipcMain.handle("paste-item", async (_event, text) => {
   ignoreClipboard = true;
   clipboard.writeText(text);
-  lastClipboard = text;
+  // Do NOT update lastClipboard — so if the user copies the same text later it still registers
+
+  pasteDeactivate();
+  await new Promise(r => setTimeout(r, 80));
 
   let error = null;
   try {
@@ -250,16 +235,22 @@ ipcMain.handle("paste-item", async (_event, text) => {
     console.error("Paste failed:", e.message);
   }
 
-  // Auto-remove: delete item from queue after successful paste
-  if (!error && autoRemove) {
-    clipboardHistory = clipboardHistory.filter((item) => item !== text);
+  await new Promise(r => setTimeout(r, 30));
+  pasteReactivate();
+
+  // Stop ignoring immediately after paste completes so next copy is captured
+  ignoreClipboard = false;
+
+  // Always remove from queue on paste (one-time use)
+  const idx = clipboardHistory.indexOf(text);
+  if (idx >= 0) {
+    clipboardHistory.splice(idx, 1);
     if (win && !win.isDestroyed()) {
       win.webContents.send("clipboard-update", clipboardHistory);
     }
   }
 
-  setTimeout(() => { ignoreClipboard = false; lastClipboard = ""; }, 400);
-  return { ok: !error, error, autoRemoved: !error && autoRemove };
+  return { ok: !error, error, removed: idx >= 0 };
 });
 
 ipcMain.handle("paste-next", async () => {
@@ -270,7 +261,10 @@ ipcMain.handle("paste-next", async () => {
   const text = clipboardHistory[0];
   ignoreClipboard = true;
   clipboard.writeText(text);
-  lastClipboard = text;
+  // Do NOT update lastClipboard
+
+  pasteDeactivate();
+  await new Promise(r => setTimeout(r, 80));
 
   let error = null;
   try {
@@ -280,7 +274,11 @@ ipcMain.handle("paste-next", async () => {
     console.error("Paste failed:", e.message);
   }
 
-  // Always remove after paste-next (this is the sequential behavior)
+  await new Promise(r => setTimeout(r, 30));
+  pasteReactivate();
+
+  ignoreClipboard = false;
+
   if (!error) {
     clipboardHistory.shift();
     if (win && !win.isDestroyed()) {
@@ -288,15 +286,13 @@ ipcMain.handle("paste-next", async () => {
     }
   }
 
-  setTimeout(() => { ignoreClipboard = false; lastClipboard = ""; }, 400);
   return { ok: !error, error, text, remaining: clipboardHistory.length };
 });
 
 ipcMain.handle("copy-item", (_event, text) => {
   ignoreClipboard = true;
   clipboard.writeText(text);
-  lastClipboard = text;
-  setTimeout(() => { ignoreClipboard = false; lastClipboard = ""; }, 250);
+  setTimeout(() => { ignoreClipboard = false; }, 200);
   return { ok: true };
 });
 
@@ -315,12 +311,21 @@ ipcMain.handle("move-to-top", (_event, text) => {
 
 ipcMain.handle("clear-all", () => {
   clipboardHistory = [];
+  lastClipboard = clipboard.readText() || "";
   return { history: clipboardHistory };
+});
+
+ipcMain.handle("set-focusable", (_event, focusable) => {
+  if (win && !win.isDestroyed()) {
+    win.setFocusable(focusable);
+    if (focusable) win.focus();
+  }
+  return { ok: true };
 });
 
 ipcMain.handle("toggle-sticky", (_event, sticky) => {
   if (win && !win.isDestroyed()) {
-    win.setAlwaysOnTop(sticky, "screen-saver");
+    win.setAlwaysOnTop(sticky, IS_MAC ? "screen-saver" : "floating");
   }
   return { sticky };
 });
@@ -331,11 +336,6 @@ ipcMain.handle("minimize-app", () => {
 
 ipcMain.handle("close-app", () => {
   app.quit();
-});
-
-ipcMain.handle("set-auto-remove", (_event, enabled) => {
-  autoRemove = enabled;
-  return { autoRemove };
 });
 
 ipcMain.handle("get-history", () => ({ history: clipboardHistory }));
@@ -357,23 +357,176 @@ ipcMain.handle("delete-prompt", (_event, id) => {
   return { ok: true };
 });
 
-ipcMain.handle("use-prompt", (_event, text) => {
-  // Push to queue so it shows up and can be pasted
-  if (!clipboardHistory.includes(text)) {
-    clipboardHistory.unshift(text);
-    if (clipboardHistory.length > MAX_ITEMS) clipboardHistory.pop();
-    if (win && !win.isDestroyed()) {
-      win.webContents.send("clipboard-update", clipboardHistory);
-    }
-  }
-  clipboard.writeText(text);
+
+// ── Reprompt Handlers ─────────────────────────────────────────────
+
+let cfgWin = null;
+ipcMain.handle("open-config-window", () => {
+  if (cfgWin && !cfgWin.isDestroyed()) { cfgWin.focus(); return; }
+  cfgWin = new BrowserWindow({
+    width: 320,
+    height: 420,
+    resizable: false,
+    alwaysOnTop: true,
+    frame: true,
+    focusable: true,
+    skipTaskbar: true,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+  cfgWin.loadFile("config.html");
+  cfgWin.setMenuBarVisibility(false);
+  cfgWin.on("closed", () => { cfgWin = null; });
+});
+
+ipcMain.handle("get-config", () => aiConfig);
+
+ipcMain.handle("save-config", (_event, cfg) => {
+  aiConfig = { ...aiConfig, ...cfg };
+  saveConfig();
   return { ok: true };
 });
+
+ipcMain.handle("reprompt", (event, text, instruction) => {
+  const { provider, apiKey, model, baseUrl, systemPrompt: customSystemPrompt } = aiConfig;
+  if (!apiKey) return { ok: false, error: "No API key configured — click ⚙." };
+  if (!text || !text.trim()) return { ok: false, error: "No text to enhance." };
+
+  const defaultSystem = `You are a text rewriting assistant. Rewrite the text exactly as instructed: ${instruction}. Output only the rewritten text — no explanations, no preamble, no quotes, nothing else.`;
+  const systemPrompt = customSystemPrompt
+    ? `${customSystemPrompt}\n\nInstruction: ${instruction}. Output only the rewritten text — no explanations, no preamble, no quotes, nothing else.`
+    : defaultSystem;
+  const userPrompt = text;
+
+  const wc = event.sender;
+  const send = (type, payload) => {
+    if (!wc || wc.isDestroyed()) return;
+    wc.send("reprompt-stream", { type, payload });
+  };
+
+  // Fire and forget — return immediately so renderer isn't blocked awaiting invoke
+  // Stream events (start/chunk/done/error) go via wc.send
+  const run = async () => {
+    try {
+      if (provider === "claude") {
+        await streamClaude(apiKey, model, systemPrompt, userPrompt, send);
+      } else {
+        const isOpenRouter = provider === "openrouter";
+        const host = isOpenRouter ? "openrouter.ai"
+          : provider === "custom" ? baseUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")
+            : "api.openai.com";
+        await streamOpenAICompat(host, apiKey, model, systemPrompt, userPrompt, isOpenRouter, send);
+      }
+    } catch (e) {
+      console.error("[reprompt error]", e.message);
+      send("error", e.message);
+    }
+  };
+  run();
+  return { ok: true };
+});
+
+function streamOpenAICompat(host, apiKey, model, system, user, isOpenRouter, send) {
+  const body = JSON.stringify({
+    model, stream: true, max_tokens: 2048,
+    messages: [{ role: "system", content: system }, { role: "user", content: user }],
+  });
+  const headers = {
+    "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}`,
+    "Content-Length": Buffer.byteLength(body),
+  };
+  if (isOpenRouter) { headers["HTTP-Referer"] = "https://github.com/omkarbhad/repromptr"; headers["X-Title"] = "Repromptr"; }
+  const apiPath = isOpenRouter ? "/api/v1/chat/completions" : "/v1/chat/completions";
+
+  return new Promise((resolve, reject) => {
+    const req = https.request({ hostname: host, path: apiPath, method: "POST", headers }, (res) => {
+      if (res.statusCode !== 200) {
+        let raw = "";
+        res.on("data", (c) => { raw += c; });
+        res.on("end", () => {
+          try { const j = JSON.parse(raw); reject(new Error(j.error?.message || raw.slice(0, 200))); }
+          catch { reject(new Error(`HTTP ${res.statusCode}: ${raw.slice(0, 200)}`)); }
+        });
+        return;
+      }
+      send("start", null);
+      let buf = "";
+      res.on("data", (chunk) => {
+        buf += chunk.toString();
+        const lines = buf.split("\n");
+        buf = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const data = line.slice(6).trim();
+          if (data === "[DONE]") continue;
+          try {
+            const delta = JSON.parse(data).choices?.[0]?.delta?.content;
+            if (delta) send("chunk", delta);
+          } catch { }
+        }
+      });
+      res.on("end", () => { send("done", null); resolve(); });
+    });
+    req.on("error", reject);
+    req.setTimeout(30000, () => { req.destroy(); reject(new Error("Request timed out")); });
+    req.write(body);
+    req.end();
+  });
+}
+
+function streamClaude(apiKey, model, system, user, send) {
+  const body = JSON.stringify({
+    model, max_tokens: 2048, stream: true, system,
+    messages: [{ role: "user", content: user }],
+  });
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: "api.anthropic.com", path: "/v1/messages", method: "POST",
+      headers: {
+        "Content-Type": "application/json", "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01", "Content-Length": Buffer.byteLength(body)
+      },
+    }, (res) => {
+      if (res.statusCode !== 200) {
+        let raw = "";
+        res.on("data", (c) => { raw += c; });
+        res.on("end", () => {
+          try { const j = JSON.parse(raw); reject(new Error(j.error?.message || raw.slice(0, 200))); }
+          catch { reject(new Error(`HTTP ${res.statusCode}: ${raw.slice(0, 200)}`)); }
+        });
+        return;
+      }
+      send("start", null);
+      let buf = "";
+      res.on("data", (chunk) => {
+        buf += chunk.toString();
+        const lines = buf.split("\n");
+        buf = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const ev = JSON.parse(line.slice(6));
+            if (ev.type === "content_block_delta" && ev.delta?.text) send("chunk", ev.delta.text);
+          } catch { }
+        }
+      });
+      res.on("end", () => { send("done", null); resolve(); });
+    });
+    req.on("error", reject);
+    req.setTimeout(30000, () => { req.destroy(); reject(new Error("Request timed out")); });
+    req.write(body);
+    req.end();
+  });
+}
 
 // ── App lifecycle ────────────────────────────────────────────────
 
 app.whenReady().then(() => {
   loadPrompts();
+  loadConfig();
   createWindow();
   createTray();
 });

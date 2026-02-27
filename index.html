@@ -1,820 +1,1384 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Pastr</title>
-<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Repromptr</title>
+  <script src="./node_modules/lucide/dist/umd/lucide.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  :root {
-    --bg:          #0a0a0e;
-    --bg-card:     #161620;
-    --bg-card-h:   #1e1e2a;
-    --bg-card-act: #252534;
-    --bar:         #08080c;
-    --accent:      #7c6cf0;
-    --accent-dim:  rgba(124, 108, 240, 0.25);
-    --green:       #34d399;
-    --green-dim:   rgba(52, 211, 153, 0.20);
-    --red:         #f87171;
-    --red-dim:     rgba(248, 113, 113, 0.18);
-    --amber:       #fbbf24;
-    --text:        rgba(255, 255, 255, 0.92);
-    --text2:       rgba(255, 255, 255, 0.50);
-    --text3:       rgba(255, 255, 255, 0.25);
-    --border:      rgba(255, 255, 255, 0.06);
-    --border-h:    rgba(255, 255, 255, 0.12);
-  }
+    :root {
+      --bg: #0a0a0e;
+      --bg-card: #161620;
+      --bg-card-h: #1e1e2a;
+      --bg-card-act: #252534;
+      --bar: #08080c;
+      --accent: #7c6cf0;
+      --accent-dim: rgba(124, 108, 240, 0.25);
+      --green: #34d399;
+      --green-dim: rgba(52, 211, 153, 0.20);
+      --red: #f87171;
+      --red-dim: rgba(248, 113, 113, 0.18);
+      --amber: #fbbf24;
+      --text: rgba(255, 255, 255, 0.92);
+      --text2: rgba(255, 255, 255, 0.50);
+      --text3: rgba(255, 255, 255, 0.25);
+      --border: rgba(255, 255, 255, 0.06);
+      --border-h: rgba(255, 255, 255, 0.12);
+    }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    overflow: hidden;
-    user-select: none;
-    -webkit-font-smoothing: antialiased;
-  }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
 
-  #app {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    background: var(--bg);
-    overflow: hidden;
-  }
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: var(--bg);
+      overflow: hidden;
+    }
 
-  /* ── Title Bar ─────────────────────────────────────────────────── */
-  #titlebar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    background: var(--bar);
-    -webkit-app-region: drag;
-    flex-shrink: 0;
-    border-bottom: 1px solid var(--border);
-  }
+    /* ── Title Bar ─────────────────────────────────────────────────── */
+    #titlebar {
+      display: flex;
+      flex-direction: column;
+      background: var(--bar);
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+    }
 
-  #titlebar .logo { color: var(--accent); flex-shrink: 0; }
+    #titlebar-row1 {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 10px 6px;
+      -webkit-app-region: drag;
+    }
 
-  #titlebar h1 {
-    font-size: 12.5px;
-    font-weight: 600;
-    letter-spacing: 0.2px;
-    color: var(--text);
-    flex: 1;
-  }
+    #titlebar-row2 {
+      padding: 0 10px 7px;
+      -webkit-app-region: no-drag;
+    }
 
-  .tb-btn {
-    -webkit-app-region: no-drag;
-    width: 26px; height: 26px;
-    border: 1px solid transparent;
-    border-radius: 7px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    color: var(--text2);
-    background: transparent;
-  }
-  .tb-btn:hover {
-    background: rgba(255,255,255,0.07);
-    border-color: var(--border-h);
-    color: var(--text);
-  }
+    #titlebar .logo {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
 
-  .tb-btn.on {
-    background: var(--accent-dim);
-    border-color: rgba(124, 108, 240, 0.35);
-    color: var(--accent);
-  }
-  .tb-btn.on:hover { background: rgba(124, 108, 240, 0.35); }
-  .tb-btn.on-green {
-    background: var(--green-dim);
-    border-color: rgba(52, 211, 153, 0.30);
-    color: var(--green);
-  }
-  .tb-btn.on-green:hover { background: rgba(52, 211, 153, 0.30); }
+    #titlebar h1 {
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      color: var(--text);
+      flex: 1;
+      min-width: 0;
+    }
 
-  .tb-btn.close:hover { background: var(--red-dim); color: var(--red); border-color: rgba(248,113,113,0.25); }
-  .tb-btn.min:hover   { background: rgba(251,191,36,0.15); color: var(--amber); border-color: rgba(251,191,36,0.25); }
+    .tb-btn {
+      -webkit-app-region: no-drag;
+      width: 24px;
+      height: 24px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.1s, border-color 0.1s, color 0.1s;
+      color: var(--text2);
+      background: transparent;
+    }
 
-  .sep { width: 1px; height: 16px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
+    .tb-btn:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: var(--border-h);
+      color: var(--text);
+    }
 
-  /* ── Paste Next Button ─────────────────────────────────────────── */
-  #paste-next-bar {
-    padding: 6px 6px 0;
-    flex-shrink: 0;
-  }
+    .tb-btn.on {
+      background: var(--accent-dim);
+      border-color: rgba(124, 108, 240, 0.35);
+      color: var(--accent);
+    }
 
-  #btn-paste-next {
-    width: 100%;
-    padding: 9px 12px;
-    border: 1px solid rgba(124, 108, 240, 0.25);
-    border-radius: 10px;
-    background: var(--accent-dim);
-    color: var(--accent);
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    transition: all 0.18s ease;
-    letter-spacing: 0.2px;
-  }
-  #btn-paste-next:hover {
-    background: rgba(124, 108, 240, 0.35);
-    border-color: rgba(124, 108, 240, 0.45);
-  }
-  #btn-paste-next:active { transform: scale(0.98); }
-  #btn-paste-next:disabled {
-    opacity: 0.3;
-    cursor: default;
-    pointer-events: none;
-  }
-  #btn-paste-next .next-preview {
-    color: rgba(255,255,255,0.45);
-    font-weight: 400;
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+    .tb-btn.on:hover {
+      background: rgba(124, 108, 240, 0.35);
+    }
 
-  /* ── Queue List ────────────────────────────────────────────────── */
-  #queue-wrap {
-    flex: 1;
-    overflow-y: auto;
-    padding: 6px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.06) transparent;
-  }
-  #queue-wrap::-webkit-scrollbar { width: 4px; }
-  #queue-wrap::-webkit-scrollbar-track { background: transparent; }
-  #queue-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
+    .tb-btn.on-green {
+      background: var(--green-dim);
+      border-color: rgba(52, 211, 153, 0.30);
+      color: var(--green);
+    }
 
-  .qi {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    margin-bottom: 3px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.18s cubic-bezier(.4,0,.2,1);
-    animation: slideIn 0.22s cubic-bezier(.4,0,.2,1);
-  }
-  .qi:hover { background: var(--bg-card-h); border-color: var(--border-h); }
-  .qi:active { background: var(--bg-card-act); transform: scale(0.985); }
+    .tb-btn.on-green:hover {
+      background: rgba(52, 211, 153, 0.30);
+    }
 
-  .qi .num {
-    width: 20px; height: 20px;
-    line-height: 20px;
-    text-align: center;
-    font-size: 9.5px;
-    font-weight: 700;
-    color: var(--accent);
-    background: var(--accent-dim);
-    border-radius: 6px;
-    flex-shrink: 0;
-  }
+    .tb-btn.close:hover {
+      background: var(--red-dim);
+      color: var(--red);
+      border-color: rgba(248, 113, 113, 0.25);
+    }
 
-  .qi .txt {
-    flex: 1;
-    font-size: 12px;
-    line-height: 1.5;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    min-width: 0;
-  }
+    .tb-btn.min:hover {
+      background: rgba(251, 191, 36, 0.15);
+      color: var(--amber);
+      border-color: rgba(251, 191, 36, 0.25);
+    }
 
-  .qi .del-btn {
-    width: 22px; height: 22px;
-    border: none;
-    border-radius: 50%;
-    background: transparent;
-    color: var(--text3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s;
-    flex-shrink: 0;
-    opacity: 0;
-  }
-  .qi:hover .del-btn { opacity: 1; }
-  .qi .del-btn:hover { background: var(--red-dim); color: var(--red); }
+    .sep {
+      width: 1px;
+      height: 16px;
+      background: var(--border);
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
 
-  .qi.removing { animation: slideOut 0.2s cubic-bezier(.4,0,.2,1) forwards; }
+    /* ── Queue List ────────────────────────────────────────────────── */
+    #queue-wrap {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px;
+      display: none;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.06) transparent;
+    }
 
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(-6px) scale(0.97); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
-  }
-  @keyframes slideOut {
-    from { opacity: 1; transform: translateX(0); max-height: 50px; }
-    to   { opacity: 0; transform: translateX(30px); max-height: 0; padding: 0 12px; margin: 0; border-width: 0; }
-  }
+    #queue-wrap.has-items {
+      display: block;
+    }
 
-  /* ── Context Menu ──────────────────────────────────────────────── */
-  #ctx {
-    position: fixed;
-    display: none;
-    background: #0e0e14;
-    border: 1px solid var(--border-h);
-    border-radius: 10px;
-    padding: 4px;
-    min-width: 150px;
-    z-index: 1000;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
-  }
-  #ctx.show { display: block; }
+    #queue-wrap::-webkit-scrollbar {
+      width: 4px;
+    }
 
-  .cm {
-    padding: 7px 11px;
-    font-size: 11.5px;
-    color: var(--text);
-    border-radius: 7px;
-    cursor: pointer;
-    transition: background 0.12s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .cm:hover { background: rgba(255,255,255,0.06); }
-  .cm.danger:hover { background: var(--red-dim); color: var(--red); }
+    #queue-wrap::-webkit-scrollbar-track {
+      background: transparent;
+    }
 
-  /* ── Empty State ───────────────────────────────────────────────── */
-  #empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    gap: 10px;
-    padding: 40px 20px;
-    color: var(--text3);
-  }
-  #empty .empty-icon { opacity: 0.15; }
-  #empty p { font-size: 12.5px; text-align: center; line-height: 1.5; }
-  #empty .hint { font-size: 11px; opacity: 0.6; }
-  #empty .hint strong { font-weight: 600; opacity: 0.8; }
+    #queue-wrap::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+    }
 
-  /* ── Status Bar ────────────────────────────────────────────────── */
-  #status {
-    padding: 7px 12px;
-    font-size: 10.5px;
-    color: var(--text3);
-    background: var(--bar);
-    border-top: 1px solid var(--border);
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  #status .cnt { color: var(--text2); font-weight: 600; }
+    .qi {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      margin-bottom: 3px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.1s, border-color 0.1s;
+    }
 
-  /* ── Tab Bar ──────────────────────────────────────────────────── */
-  #tabs {
-    display: flex;
-    gap: 3px;
-    -webkit-app-region: no-drag;
-    margin-right: 4px;
-  }
-  .tab-btn {
-    padding: 3px 9px;
-    font-size: 10.5px;
-    font-weight: 500;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    background: transparent;
-    color: var(--text2);
-    cursor: pointer;
-    transition: all 0.15s ease;
-    letter-spacing: 0.1px;
-  }
-  .tab-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); }
-  .tab-btn.active {
-    background: var(--accent-dim);
-    border-color: rgba(124, 108, 240, 0.35);
-    color: var(--accent);
-    font-weight: 600;
-  }
+    .qi.new-item {
+      animation: slideIn 0.15s ease;
+    }
 
-  /* ── Prompts List ──────────────────────────────────────────────── */
-  #prompts-wrap {
-    flex: 1;
-    overflow-y: auto;
-    padding: 6px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.06) transparent;
-  }
-  #prompts-wrap::-webkit-scrollbar { width: 4px; }
-  #prompts-wrap::-webkit-scrollbar-track { background: transparent; }
-  #prompts-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
+    .qi:hover {
+      background: var(--bg-card-h);
+      border-color: var(--border-h);
+    }
 
-  .pi {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    margin-bottom: 3px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.18s cubic-bezier(.4,0,.2,1);
-    animation: slideIn 0.22s cubic-bezier(.4,0,.2,1);
-  }
-  .pi:hover { background: var(--bg-card-h); border-color: var(--border-h); }
-  .pi:active { background: var(--bg-card-act); transform: scale(0.985); }
-  .pi .bm-icon {
-    width: 20px; height: 20px;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(251, 191, 36, 0.18);
-    border-radius: 6px;
-    color: var(--amber);
-    flex-shrink: 0;
-  }
-  .pi .txt {
-    flex: 1;
-    font-size: 12px;
-    line-height: 1.5;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    min-width: 0;
-  }
-  .pi .pi-actions {
-    display: flex;
-    gap: 4px;
-    opacity: 0;
-    transition: opacity 0.15s;
-  }
-  .pi:hover .pi-actions { opacity: 1; }
-  .pi .use-btn, .pi .del-btn {
-    width: 22px; height: 22px;
-    border: none;
-    border-radius: 50%;
-    background: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s;
-    flex-shrink: 0;
-  }
-  .pi .use-btn { color: var(--green); }
-  .pi .use-btn:hover { background: var(--green-dim); }
-  .pi .del-btn { color: var(--text3); }
-  .pi .del-btn:hover { background: var(--red-dim); color: var(--red); }
-  .pi.removing { animation: slideOut 0.2s cubic-bezier(.4,0,.2,1) forwards; }
+    .qi:active {
+      background: var(--bg-card-act);
+      transform: scale(0.985);
+    }
 
-  #prompts-empty {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    gap: 10px;
-    padding: 40px 20px;
-    color: var(--text3);
-  }
-  #prompts-empty p { font-size: 12.5px; text-align: center; line-height: 1.5; }
-  #prompts-empty .hint { font-size: 11px; opacity: 0.6; }
+    .qi .num {
+      width: 20px;
+      height: 20px;
+      line-height: 20px;
+      text-align: center;
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
 
-  /* ── Tooltips ──────────────────────────────────────────────────── */
-  [data-tip] { position: relative; }
-  [data-tip]::after {
-    content: attr(data-tip);
-    position: absolute;
-    bottom: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%) scale(0.92);
-    background: #060610;
-    color: var(--text);
-    font-size: 10px;
-    padding: 3px 7px;
-    border-radius: 5px;
-    white-space: nowrap;
-    pointer-events: none;
-    opacity: 0;
-    transition: all 0.12s ease;
-    border: 1px solid var(--border);
-  }
-  [data-tip]:hover::after { opacity: 1; transform: translateX(-50%) scale(1); }
-</style>
+    .qi .txt {
+      flex: 1;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    .qi .del-btn {
+      width: 22px;
+      height: 22px;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--text3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.1s, background 0.1s, color 0.1s;
+    }
+
+    .qi:hover .del-btn {
+      opacity: 1;
+    }
+
+    .qi .del-btn:hover {
+      background: var(--red-dim);
+      color: var(--red);
+    }
+
+    .qi.removing {
+      animation: slideOut 0.12s ease forwards;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideOut {
+      from {
+        opacity: 1;
+        transform: translateX(0);
+        max-height: 50px;
+      }
+
+      to {
+        opacity: 0;
+        transform: translateX(20px);
+        max-height: 0;
+        padding: 0 12px;
+        margin: 0;
+        border-width: 0;
+      }
+    }
+
+    /* ── Context Menu ──────────────────────────────────────────────── */
+    #ctx {
+      position: fixed;
+      display: none;
+      background: #0e0e14;
+      border: 1px solid var(--border-h);
+      border-radius: 10px;
+      padding: 4px;
+      min-width: 150px;
+      z-index: 1000;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    #ctx.show {
+      display: block;
+    }
+
+    .cm {
+      padding: 7px 11px;
+      font-size: 11.5px;
+      color: var(--text);
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cm:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .cm.danger:hover {
+      background: var(--red-dim);
+      color: var(--red);
+    }
+
+    /* ── Empty State ───────────────────────────────────────────────── */
+    #empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      gap: 10px;
+      padding: 40px 20px;
+      color: var(--text3);
+    }
+
+    #empty .empty-icon {
+      opacity: 0.15;
+    }
+
+    #empty p {
+      font-size: 12.5px;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    #empty .hint {
+      font-size: 11px;
+      opacity: 0.6;
+    }
+
+    #empty .hint strong {
+      font-weight: 600;
+      opacity: 0.8;
+    }
+
+    /* ── Status Bar ────────────────────────────────────────────────── */
+    #status {
+      padding: 6px 12px;
+      font-size: 10.5px;
+      color: var(--text3);
+      background: var(--bar);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #st-text {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #st-count {
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    #status .cnt {
+      color: var(--text2);
+      font-weight: 600;
+    }
+
+    /* ── Tab Bar ──────────────────────────────────────────────────── */
+    #tabs {
+      display: flex;
+      gap: 3px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 2px;
+      width: 100%;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 4px 8px;
+      font-size: 10.5px;
+      font-weight: 500;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      background: transparent;
+      color: var(--text2);
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .tab-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      background: var(--accent-dim);
+      border-color: rgba(124, 108, 240, 0.35);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ── Prompts List ──────────────────────────────────────────────── */
+    #prompts-wrap {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px;
+      display: none;
+      /* shown via showTab() */
+      flex-direction: column;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.06) transparent;
+    }
+
+    #prompts-wrap::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    #prompts-wrap::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #prompts-wrap::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+    }
+
+    #prompts-list {
+      width: 100%;
+    }
+
+    .pi {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      margin-bottom: 3px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.1s, border-color 0.1s;
+    }
+
+    .pi:hover {
+      background: var(--bg-card-h);
+      border-color: var(--border-h);
+    }
+
+    .pi:active {
+      background: var(--bg-card-act);
+      transform: scale(0.985);
+    }
+
+    .pi .num {
+      width: 20px;
+      height: 20px;
+      line-height: 20px;
+      text-align: center;
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--amber);
+      background: rgba(251, 191, 36, 0.18);
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    .pi .txt {
+      flex: 1;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    .pi .del-btn {
+      width: 22px;
+      height: 22px;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--text3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.1s, background 0.1s, color 0.1s;
+    }
+
+    .pi:hover .del-btn {
+      opacity: 1;
+    }
+
+    .pi .del-btn:hover {
+      background: var(--red-dim);
+      color: var(--red);
+    }
+
+    .pi.removing {
+      animation: slideOut 0.12s ease forwards;
+    }
+
+    #prompts-empty {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      gap: 10px;
+      padding: 40px 20px;
+      color: var(--text3);
+    }
+
+    #prompts-empty p {
+      font-size: 12.5px;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    #prompts-empty .hint {
+      font-size: 11px;
+      opacity: 0.6;
+    }
+
+    /* ── Reprompt Tab ──────────────────────────────────────────────── */
+    #reprompt-wrap {
+      flex: 1 1 0;
+      min-height: 0;
+      overflow: hidden;
+      padding: 8px;
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    #reprompt-wrap.visible {
+      display: flex;
+    }
+
+    #reprompt-wrap>*:not(#rp-input-wrap) {
+      flex-shrink: 0;
+    }
+
+    #rp-input-wrap {
+      position: relative;
+      flex: 1 1 0;
+      min-height: 0;
+      display: flex;
+    }
+
+    #rp-input {
+      width: 100%;
+      box-sizing: border-box;
+      flex: 1 1 0;
+      min-height: 80px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 11.5px;
+      line-height: 1.5;
+      padding: 8px 10px;
+      resize: none;
+      outline: none;
+      transition: border-color 0.15s, color 0.15s;
+      overflow-y: auto;
+      user-select: text;
+      -webkit-user-select: text;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.06) transparent;
+    }
+
+    #rp-input:focus {
+      border-color: var(--accent);
+    }
+
+    #rp-input.streaming {
+      color: var(--green);
+      border-color: rgba(52, 211, 153, 0.3);
+    }
+
+    #rp-input.error {
+      color: var(--red);
+      border-color: rgba(248, 113, 113, 0.3);
+    }
+
+    #rp-loader {
+      display: none;
+      position: absolute;
+      inset: 0;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 8px;
+      border-radius: 8px;
+      background: rgba(10, 10, 14, 0.55);
+      pointer-events: none;
+    }
+
+    #rp-loader.visible {
+      display: flex;
+    }
+
+    #rp-loader .rp-spinner {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(124, 108, 240, 0.25);
+      border-top-color: var(--accent);
+      animation: rp-spin 0.7s linear infinite;
+    }
+
+    #rp-loader .rp-thinking-text {
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 500;
+      animation: rp-pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes rp-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes rp-pulse {
+
+      0%,
+      100% {
+        opacity: 0.5;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    #rp-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .rp-chip {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text2);
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s, border-color 0.1s;
+    }
+
+    .rp-chip:hover {
+      background: var(--bg-card);
+      color: var(--text);
+    }
+
+    .rp-chip.active {
+      background: var(--accent-dim);
+      border-color: rgba(124, 108, 240, 0.4);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    #rp-enhance-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      width: 100%;
+      padding: 6px;
+      background: var(--accent-dim);
+      border: 1px solid rgba(124, 108, 240, 0.35);
+      border-radius: 8px;
+      color: var(--accent);
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.1s, opacity 0.1s;
+    }
+
+    #rp-enhance-btn:hover {
+      background: rgba(124, 108, 240, 0.35);
+    }
+
+    #rp-enhance-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    #rp-actions {
+      display: flex;
+      gap: 5px;
+    }
+
+    .rp-act-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 5px 8px;
+      font-size: 11px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text2);
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s;
+    }
+
+    .rp-act-btn:hover {
+      background: var(--bg-card-h);
+      color: var(--text);
+    }
+
+    /* ── Tooltips ──────────────────────────────────────────────────── */
+    [data-tip] {
+      position: relative;
+    }
+
+    [data-tip]::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%) scale(0.92);
+      background: #060610;
+      color: var(--text);
+      font-size: 10px;
+      padding: 3px 7px;
+      border-radius: 5px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.1s, transform 0.1s;
+      border: 1px solid var(--border);
+    }
+
+    [data-tip]:hover::after {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+  </style>
 </head>
+
 <body>
-<div id="app">
+  <div id="app">
 
-  <!-- ── Title Bar ──────────────────────────────────────────────── -->
-  <div id="titlebar">
-    <i data-lucide="clipboard-paste" class="logo" style="width:18px;height:18px"></i>
-    <h1>Pastr</h1>
-
-    <div id="tabs">
-      <button class="tab-btn active" id="tab-queue">Queue</button>
-      <button class="tab-btn"        id="tab-prompts">Saved</button>
+    <div id="titlebar">
+      <div id="titlebar-row1">
+        <img src="repromptr_logo.png" class="logo" alt="">
+        <h1>Repromptr</h1>
+        <button class="tb-btn on" id="btn-pin" data-tip="Always on top">
+          <i data-lucide="pin" style="width:12px;height:12px"></i>
+        </button>
+        <button class="tb-btn" id="btn-clear" data-tip="Clear all">
+          <i data-lucide="trash-2" style="width:12px;height:12px"></i>
+        </button>
+        <div class="sep"></div>
+        <button class="tb-btn min" id="btn-min" data-tip="Hide">
+          <i data-lucide="minus" style="width:12px;height:12px"></i>
+        </button>
+        <button class="tb-btn close" id="btn-close" data-tip="Quit">
+          <i data-lucide="x" style="width:12px;height:12px"></i>
+        </button>
+      </div>
+      <div id="titlebar-row2">
+        <div id="tabs">
+          <button class="tab-btn active" id="tab-reprompt"><i data-lucide="sparkles"
+              style="width:11px;height:11px"></i>Repromptr</button>
+          <button class="tab-btn" id="tab-queue"><i data-lucide="list" style="width:11px;height:11px"></i>Queue</button>
+          <button class="tab-btn" id="tab-prompts"><i data-lucide="bookmark"
+              style="width:11px;height:11px"></i>Saved</button>
+        </div>
+      </div>
     </div>
 
-    <button class="tb-btn on-green" id="btn-auto" data-tip="Auto-remove ON | Click to toggle">
-      <i data-lucide="trash-2" style="width:13px;height:13px"></i>
-    </button>
-    <button class="tb-btn on" id="btn-pin" data-tip="Pin on top | Click to toggle">
-      <i data-lucide="pin" style="width:13px;height:13px"></i>
-    </button>
-    <button class="tb-btn" id="btn-clear" data-tip="Clear all">
-      <i data-lucide="x-circle" style="width:13px;height:13px"></i>
-    </button>
+    <div id="queue-wrap"></div>
+    <div id="empty" style="display:none">
+      <i data-lucide="clipboard-list" class="empty-icon" style="width:44px;height:44px"></i>
+      <p>Nothing here yet</p>
+      <p class="hint">Copy text anywhere to start<br><br><strong>Shortcuts:</strong><br>Space / Cmd+V = Paste
+        Next<br>Cmd+Z = Undo<br>Esc = Hide</p>
+    </div>
 
-    <div class="sep"></div>
+    <div id="prompts-wrap">
+      <div id="prompts-list"></div>
+      <div id="prompts-empty">
+        <i data-lucide="bookmark" style="width:44px;height:44px;opacity:0.15"></i>
+        <p>No saved prompts yet</p>
+        <p class="hint">Right-click any queue item<br>and choose <strong>Save as Prompt</strong></p>
+      </div>
+    </div>
 
-    <button class="tb-btn min" id="btn-min" data-tip="Hide">
-      <i data-lucide="minus" style="width:13px;height:13px"></i>
-    </button>
-    <button class="tb-btn close" id="btn-close" data-tip="Quit">
-      <i data-lucide="x" style="width:13px;height:13px"></i>
-    </button>
-  </div>
+    <div id="reprompt-wrap" class="visible">
+      <div id="rp-input-wrap">
+        <textarea id="rp-input" placeholder="Paste or copy text to enhance…"></textarea>
+        <div id="rp-loader">
+          <div class="rp-spinner"></div><span class="rp-thinking-text">Thinking…</span>
+        </div>
+      </div>
+      <div id="rp-chips">
+        <button class="rp-chip active" data-inst="Improve clarity and quality">Improve</button>
+        <button class="rp-chip" data-inst="Rewrite in a formal, professional tone">Formal</button>
+        <button class="rp-chip" data-inst="Make it concise and to the point">Concise</button>
+        <button class="rp-chip" data-inst="Expand with more detail and context">Expand</button>
+        <button class="rp-chip"
+          data-inst="Fix ONLY grammar and spelling errors. Do not change wording, tone, style, or structure — keep the original text as-is except for correcting mistakes.">Grammar</button>
+      </div>
+      <button id="rp-enhance-btn"><i data-lucide="sparkles" style="width:12px;height:12px"></i> Enhance</button>
+      <div id="rp-actions">
+        <button class="rp-act-btn" id="rp-copy-btn"><i data-lucide="copy" style="width:11px;height:11px"></i>
+          Copy</button>
+        <button class="rp-act-btn" id="rp-paste-btn"><i data-lucide="clipboard-paste"
+            style="width:11px;height:11px"></i> Paste</button>
+        <button class="rp-act-btn" id="rp-clear-btn"><i data-lucide="x" style="width:11px;height:11px"></i>
+          Clear</button>
+        <button class="rp-act-btn" id="rp-config-btn" style="flex:0;padding:5px 8px"><i data-lucide="settings"
+            style="width:11px;height:11px"></i></button>
+      </div>
+    </div>
 
-  <!-- ── Paste Next ────────────────────────────────────────────── -->
-  <div id="paste-next-bar">
-    <button id="btn-paste-next" disabled data-tip="Space key">
-      <i data-lucide="play" style="width:14px;height:14px"></i>
-      <span>Paste Next</span>
-      <span class="next-preview" id="next-preview"></span>
-    </button>
-  </div>
+    <div id="status">
+      <span id="st-text">Ready</span>
+      <span id="st-count"></span>
+    </div>
 
-  <!-- ── Queue / Empty ──────────────────────────────────────────── -->
-  <div id="queue-wrap"></div>
-  <div id="empty">
-    <i data-lucide="clipboard-list" class="empty-icon" style="width:44px;height:44px"></i>
-    <p>Nothing here yet</p>
-    <p class="hint">Copy text anywhere to start<br><br><strong>Shortcuts:</strong><br>Space = Paste Next<br>Cmd+Z = Undo<br>Esc = Hide</p>
-  </div>
-
-  <!-- ── Saved Prompts ──────────────────────────────────────────── -->
-  <div id="prompts-wrap" style="display:none">
-    <div id="prompts-list"></div>
-    <div id="prompts-empty">
-      <i data-lucide="bookmark" style="width:44px;height:44px;opacity:0.15"></i>
-      <p>No saved prompts yet</p>
-      <p class="hint">Right-click any queue item<br>and choose <strong>Save as Prompt</strong></p>
+    <div id="ctx">
+      <div class="cm" data-act="copy"><i data-lucide="copy" style="width:13px;height:13px"></i>Copy</div>
+      <div class="cm" data-act="top"><i data-lucide="arrow-up-to-line" style="width:13px;height:13px"></i>Move to top
+      </div>
+      <div class="cm" data-act="save"><i data-lucide="bookmark" style="width:13px;height:13px"></i>Save as Prompt</div>
+      <div class="cm" data-act="reprompt"><i data-lucide="sparkles" style="width:13px;height:13px"></i>Send to Repromptr
+      </div>
+      <div class="cm danger" data-act="del"><i data-lucide="trash-2" style="width:13px;height:13px"></i>Delete</div>
     </div>
   </div>
 
-  <!-- ── Status ─────────────────────────────────────────────────── -->
-  <div id="status">
-    <span id="st-text">Ready</span>
-    <span id="st-count"></span>
-  </div>
+  <script>
+    lucide.createIcons();
 
-  <!-- ── Context Menu ───────────────────────────────────────────── -->
-  <div id="ctx">
-    <div class="cm" data-act="copy">
-      <i data-lucide="copy" style="width:13px;height:13px"></i>
-      Copy
-    </div>
-    <div class="cm" data-act="top">
-      <i data-lucide="arrow-up-to-line" style="width:13px;height:13px"></i>
-      Move to top
-    </div>
-    <div class="cm" data-act="save">
-      <i data-lucide="bookmark" style="width:13px;height:13px"></i>
-      Save as Prompt
-    </div>
-    <div class="cm danger" data-act="del">
-      <i data-lucide="circle-x" style="width:13px;height:13px"></i>
-      Delete
-    </div>
-  </div>
-</div>
+    // ── State ──────────────────────────────────────────────────────
+    let history = [];
+    let currentTab = "reprompt";
+    let isSticky = true;
+    let ctxTarget = null;
+    let isPasting = false;
+    let undoStack = [];
+    const MAX_UNDO = 10;
+    let initialLoadDone = false;
 
-<script>
-  // Initialize Lucide icons
-  lucide.createIcons();
+    // ── DOM ────────────────────────────────────────────────────────
+    const queue = document.getElementById("queue-wrap");
+    const empty = document.getElementById("empty");
+    const stText = document.getElementById("st-text");
+    const stCount = document.getElementById("st-count");
+    const ctx = document.getElementById("ctx");
+    const promptsWrap = document.getElementById("prompts-wrap");
+    const promptsList = document.getElementById("prompts-list");
+    const promptsEmpty = document.getElementById("prompts-empty");
+    const tabQueue = document.getElementById("tab-queue");
+    const tabPrompts = document.getElementById("tab-prompts");
+    const tabReprompt = document.getElementById("tab-reprompt");
+    const repromptWrap = document.getElementById("reprompt-wrap");
+    const rpInput = document.getElementById("rp-input");
+    const rpEnhanceBtn = document.getElementById("rp-enhance-btn");
+    const rpLoader = document.getElementById("rp-loader");
+    const rpCopyBtn = document.getElementById("rp-copy-btn");
+    const rpPasteBtn = document.getElementById("rp-paste-btn");
+    const rpClearBtn = document.getElementById("rp-clear-btn");
+    const rpConfigBtn = document.getElementById("rp-config-btn");
 
-  // ── State ──────────────────────────────────────────────────────
-  let history = [];
-  let isSticky = true;
-  let autoRemove = true;
-  let ctxTarget = null;
-  let isPasting = false;
-  let undoStack = [];
-  const MAX_UNDO = 10;
+    // ── Helpers ────────────────────────────────────────────────────
+    function esc(s) {
+      return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+    function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+    function mkPreview(text) {
+      const s = text.replace(/\n/g, " ");
+      return s.length > 50 ? s.slice(0, 47) + "..." : s;
+    }
+    function setStatus(prefix, text) {
+      const msg = !text ? prefix : `${prefix}: ${text.slice(0, 28).replace(/\n/g, " ")}${text.length > 28 ? "..." : ""}`;
+      if (stText.textContent !== msg) stText.textContent = msg;
+    }
+    function updateCount(n) {
+      stCount.innerHTML = n > 0 ? `<span class="cnt">${n}</span> item${n !== 1 ? "s" : ""}` : "";
+    }
+    function syncQueueVisibility() {
+      if (currentTab !== "queue") return;
+      const hasItems = history.length > 0;
+      queue.classList.toggle("has-items", hasItems);
+      empty.style.display = hasItems ? "none" : "flex";
+    }
+    function handlePasteError(err) {
+      isPasting = false;
+      stText.textContent = err.includes("not allowed")
+        ? "Enable Accessibility in System Preferences"
+        : err.includes("timeout") ? "Paste timeout — try again"
+          : `Paste failed: ${err}`;
+      stText.style.color = "var(--red)";
+      setTimeout(() => { stText.style.color = ""; setStatus("Ready"); }, 5000);
+    }
 
-  // ── DOM ────────────────────────────────────────────────────────
-  const queue        = document.getElementById("queue-wrap");
-  const empty        = document.getElementById("empty");
-  const stText       = document.getElementById("st-text");
-  const stCount      = document.getElementById("st-count");
-  const ctx          = document.getElementById("ctx");
-  const btnNext      = document.getElementById("btn-paste-next");
-  const nextPreview  = document.getElementById("next-preview");
-  const promptsWrap  = document.getElementById("prompts-wrap");
-  const promptsList  = document.getElementById("prompts-list");
-  const promptsEmpty = document.getElementById("prompts-empty");
-  const pasteNextBar = document.getElementById("paste-next-bar");
-  const tabQueue     = document.getElementById("tab-queue");
-  const tabPrompts   = document.getElementById("tab-prompts");
+    function showCtx(x, y) {
+      ctx.classList.add("show");
+      const W = window.innerWidth, H = window.innerHeight;
+      const cw = ctx.offsetWidth || 160;
+      const ch = ctx.offsetHeight || 120;
+      ctx.style.left = Math.min(x, W - cw - 4) + "px";
+      ctx.style.top = Math.min(y, H - ch - 4) + "px";
+    }
 
-  // ── Render ─────────────────────────────────────────────────────
-  function render(items) {
-    history = items;
-    queue.innerHTML = "";
-    const none = items.length === 0;
-    queue.style.display = none ? "none" : "block";
-    empty.style.display = none ? "flex" : "none";
+    // ── Remove item from DOM smoothly ─────────────────────────────
+    async function removeItemEl(el, newHistory) {
+      el.classList.add("removing");
+      await delay(120);
+      el.remove();
+      history = newHistory;
+      queue.querySelectorAll(".qi:not(.removing) .num").forEach((n, i) => { n.textContent = i + 1; });
+      updateCount(newHistory.length);
+      syncQueueVisibility();
+    }
 
-    items.forEach((text, i) => {
-      const el = document.createElement("div");
-      el.className = "qi";
+    // ── Render ─────────────────────────────────────────────────────
+    let prevTopItem = null;
+    function render(items) {
+      const newTop = items[0] || null;
+      history = items;
+      queue.innerHTML = "";
 
-      const preview = text.replace(/\n/g, " ");
-      const display = preview.length > 50 ? preview.slice(0, 47) + "..." : preview;
+      if (items.length > 0) {
+        items.forEach((text, i) => {
+          const el = document.createElement("div");
+          el.className = "qi" + (i === 0 && text !== prevTopItem ? " new-item" : "");
+          el.innerHTML = `
+          <span class="num">${i + 1}</span>
+          <span class="txt">${esc(mkPreview(text))}</span>
+          <button class="del-btn" title="Remove"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
+        `;
 
-      el.innerHTML = `
-        <span class="num">${i + 1}</span>
-        <span class="txt">${esc(display)}</span>
-        <button class="del-btn" title="Remove"><i data-lucide="x" style="width:12px;height:12px"></i></button>
-      `;
+          el.addEventListener("click", (e) => {
+            if (e.target.closest(".del-btn")) return;
+            if (isPasting) return;
+            isPasting = true;
+            setStatus("Pasting...");
+            window.api.pasteItem(text).then(async (res) => {
+              isPasting = false;
+              if (res && res.error) { handlePasteError(res.error); return; }
+              // One-time use: remove from DOM with animation
+              if (res.removed) {
+                el.classList.add("removing");
+                await delay(120);
+                el.remove();
+                history = history.filter(h => h !== text);
+                queue.querySelectorAll(".qi:not(.removing) .num").forEach((n, i) => { n.textContent = i + 1; });
+                updateCount(history.length);
+                syncQueueVisibility();
+              }
+              setStatus("Pasted", text);
+            });
+          });
 
-      // Click to paste
-      el.addEventListener("click", (e) => {
-        if (e.target.closest(".del-btn")) return;
-        if (e.button !== 0 || isPasting) return;
-        isPasting = true;
-        setStatus("Pasting...");
-        window.api.pasteItem(text).then((res) => {
-          isPasting = false;
-          if (res && res.error) {
-            stText.textContent = res.error.includes("not allowed")
-              ? "Enable Accessibility in System Preferences"
-              : res.error.includes("timeout") ? "Paste timeout — try again"
-              : `Paste failed: ${res.error}`;
-            stText.style.color = "var(--red)";
-            setTimeout(() => { stText.style.color = ""; setStatus("Ready"); }, 5000);
-            return;
-          }
-          setStatus("Pasted", text);
+          el.querySelector(".del-btn").addEventListener("click", async (e) => {
+            e.stopPropagation();
+            undoStack.push([...history]);
+            if (undoStack.length > MAX_UNDO) undoStack.shift();
+            const res = await window.api.deleteItem(text);
+            await removeItemEl(el, res.history);
+            setStatus("Removed — Cmd+Z to undo", text);
+          });
+
+          el.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            ctxTarget = text;
+            ctx.classList.remove("show");
+            requestAnimationFrame(() => showCtx(e.clientX, e.clientY));
+          });
+
+          queue.appendChild(el);
         });
-      });
+        lucide.createIcons({ nameAttr: "data-lucide", attrs: {}, nodes: [queue] });
+      }
 
-      // Inline delete
-      el.querySelector(".del-btn").addEventListener("click", async (e) => {
-        e.stopPropagation();
-        el.classList.add("removing");
-        await delay(200);
-        undoStack.push([...history]); // Save state for undo
-        if (undoStack.length > MAX_UNDO) undoStack.shift();
-        const res = await window.api.deleteItem(text);
-        render(res.history);
-        setStatus("Removed — Cmd+Z to undo", text);
-      });
+      prevTopItem = newTop;
+      updateCount(items.length);
+      syncQueueVisibility();
+    }
 
-      // Right-click
-      el.addEventListener("contextmenu", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        ctxTarget = text;
-        ctx.style.left = e.clientX + "px";
-        ctx.style.top  = e.clientY + "px";
-        ctx.classList.add("show");
-      });
+    // ── Tab switching ──────────────────────────────────────────────
+    function showTab(tab) {
+      currentTab = tab;
+      const isQueue = tab === "queue";
+      const isPrompts = tab === "prompts";
+      const isReprompt = tab === "reprompt";
+      queue.classList.toggle("has-items", isQueue && history.length > 0);
+      empty.style.display = isQueue && history.length === 0 ? "flex" : "none";
+      promptsWrap.style.display = isPrompts ? "flex" : "none";
+      repromptWrap.classList.toggle("visible", isReprompt);
+      tabQueue.classList.toggle("active", isQueue);
+      tabPrompts.classList.toggle("active", isPrompts);
+      tabReprompt.classList.toggle("active", isReprompt);
+      // Make window focusable on Reprompt tab (needed for textarea input)
+      window.api.setFocusable(isReprompt);
+      if (isPrompts) loadAndRenderPrompts();
+      if (isReprompt) { if (history.length > 0 && !rpInput.value) rpInput.value = history[0]; }
+    }
+    tabQueue.addEventListener("click", () => showTab("queue"));
+    tabPrompts.addEventListener("click", () => showTab("prompts"));
+    tabReprompt.addEventListener("click", () => showTab("reprompt"));
 
-      queue.appendChild(el);
+    // ── Render Saved Prompts ───────────────────────────────────────
+    function renderPrompts(prompts) {
+      promptsList.innerHTML = "";
+      const none = prompts.length === 0;
+      promptsList.style.display = none ? "none" : "block";
+      promptsEmpty.style.display = none ? "flex" : "none";
+
+      if (!none) {
+        [...prompts].reverse().forEach((prompt, i) => {
+          const { id, text } = prompt;
+          const el = document.createElement("div");
+          el.className = "pi";
+          el.innerHTML = `
+          <span class="num">${i + 1}</span>
+          <span class="txt">${esc(mkPreview(text))}</span>
+          <button class="del-btn" title="Remove"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
+        `;
+
+          el.dataset.promptId = id;
+          el.addEventListener("click", async (e) => {
+            if (e.target.closest(".del-btn")) return;
+            if (isPasting) return;
+            isPasting = true;
+            setStatus("Pasting...");
+            const res = await window.api.pasteItem(text);
+            isPasting = false;
+            if (res && res.error) { handlePasteError(res.error); return; }
+            setStatus("Pasted", text);
+          });
+
+          el.querySelector(".del-btn").addEventListener("click", async (e) => {
+            e.stopPropagation();
+            el.classList.add("removing");
+            await delay(120);
+            el.remove();
+            await window.api.deletePrompt(id);
+            const remaining = promptsList.querySelectorAll(".pi:not(.removing)");
+            remaining.forEach((r, i) => { const n = r.querySelector(".num"); if (n) n.textContent = i + 1; });
+            if (promptsList.querySelectorAll(".pi").length === 0) {
+              promptsList.style.display = "none";
+              promptsEmpty.style.display = "flex";
+            }
+            setStatus("Prompt removed");
+          });
+
+          promptsList.appendChild(el);
+        });
+        lucide.createIcons({ nameAttr: "data-lucide", attrs: {}, nodes: [promptsList] });
+      }
+    }
+
+    async function loadAndRenderPrompts() {
+      renderPrompts(await window.api.getPrompts());
+    }
+
+    // ── Reprompt Tab ───────────────────────────────────────────────
+
+    // Chip selection
+    document.querySelectorAll(".rp-chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        document.querySelectorAll(".rp-chip").forEach((c) => c.classList.remove("active"));
+        chip.classList.add("active");
+      });
+    });
+    function rpResetChip() {
+      document.querySelectorAll(".rp-chip").forEach((c) => c.classList.remove("active"));
+      document.querySelector(".rp-chip").classList.add("active"); // first chip = Improve
+    }
+
+    // Streaming handler — streams result into rpInput with smooth typing effect
+    let rpStreaming = false;
+    let rpThinking = false;   // true while model is thinking (before first chunk)
+    let rpCharQueue = [];      // buffered characters for typing animation
+    let rpTypingRAF = null;    // requestAnimationFrame id
+
+    function rpResetBtn() {
+      rpEnhanceBtn.disabled = false;
+      rpEnhanceBtn.innerHTML = '<i data-lucide="sparkles" style="width:12px;height:12px"></i> Enhance';
+      lucide.createIcons({ nameAttr: "data-lucide", attrs: {}, nodes: [rpEnhanceBtn] });
+    }
+
+    // Typing animation: drains rpCharQueue at ~30-60 chars/sec for smooth feel
+    function rpStartTyping() {
+      if (rpTypingRAF) return;
+      let last = 0;
+      const CHARS_PER_FRAME = 2;   // ~120 chars/sec at 60fps — fast but visible
+      const MIN_INTERVAL = 12;     // ms between renders
+      function tick(ts) {
+        if (rpCharQueue.length === 0) { rpTypingRAF = null; return; }
+        if (ts - last >= MIN_INTERVAL) {
+          const batch = rpCharQueue.splice(0, CHARS_PER_FRAME).join("");
+          rpInput.value += batch;
+          rpInput.scrollTop = rpInput.scrollHeight;
+          last = ts;
+        }
+        rpTypingRAF = requestAnimationFrame(tick);
+      }
+      rpTypingRAF = requestAnimationFrame(tick);
+    }
+
+    function rpStopTyping() {
+      if (rpTypingRAF) { cancelAnimationFrame(rpTypingRAF); rpTypingRAF = null; }
+      // Flush any remaining chars immediately
+      if (rpCharQueue.length > 0) {
+        rpInput.value += rpCharQueue.join("");
+        rpCharQueue = [];
+        rpInput.scrollTop = rpInput.scrollHeight;
+      }
+    }
+
+    window.api.onRepromptStream((msg) => {
+      if (msg.type === "start") {
+        rpInput.value = "";
+        rpCharQueue = [];
+        rpStopTyping();
+        rpInput.classList.add("streaming");
+        rpInput.classList.remove("error");
+        // Show thinking indicator — loader stays, text says "Thinking…"
+        rpThinking = true;
+        rpLoader.classList.add("visible");
+        rpEnhanceBtn.textContent = "Thinking…";
+        rpStreaming = true;
+      } else if (msg.type === "chunk") {
+        // First chunk = thinking done
+        if (rpThinking) {
+          rpThinking = false;
+          rpLoader.classList.remove("visible");
+          rpEnhanceBtn.textContent = "Enhancing…";
+        }
+        // Push chars into buffer for smooth typing
+        for (const ch of msg.payload) rpCharQueue.push(ch);
+        rpStartTyping();
+      } else if (msg.type === "done") {
+        rpThinking = false;
+        rpStopTyping();
+        rpStreaming = false;
+        rpLoader.classList.remove("visible");
+        rpInput.classList.remove("streaming");
+        rpResetBtn();
+        setStatus("Enhanced");
+      } else if (msg.type === "error") {
+        rpThinking = false;
+        rpStopTyping();
+        rpStreaming = false;
+        rpLoader.classList.remove("visible");
+        rpInput.classList.remove("streaming");
+        rpInput.classList.add("error");
+        rpResetBtn();
+        rpInput.value = msg.payload;
+        setStatus("Error");
+      }
     });
 
-    if (items.length > 0) {
-      stCount.innerHTML = `<span class="cnt">${items.length}</span> item${items.length !== 1 ? "s" : ""}`;
-      const p = items[0].replace(/\n/g, " ");
-      nextPreview.textContent = p.length > 20 ? p.slice(0, 18) + "…" : p;
-      btnNext.disabled = false;
-    } else {
-      stCount.innerHTML = "";
-      nextPreview.textContent = "";
-      btnNext.disabled = true;
-    }
+    // Enhance button — fires off streaming request
+    rpEnhanceBtn.addEventListener("click", async () => {
+      if (rpStreaming) return;
+      const text = rpInput.value.trim();
+      if (!text) { setStatus("No text to enhance"); return; }
+      rpInput.classList.remove("error");
+      const activeChip = document.querySelector(".rp-chip.active");
+      const instruction = activeChip ? activeChip.dataset.inst : "Improve clarity and quality";
+      rpEnhanceBtn.disabled = true;
+      rpEnhanceBtn.textContent = "Enhancing…";
+      rpLoader.classList.add("visible");
+      const res = await window.api.reprompt(text, instruction);
+      if (!res.ok && !rpStreaming) {
+        rpLoader.classList.remove("visible");
+        rpResetBtn();
+        rpInput.classList.add("error");
+        rpInput.value = res.error;
+        setStatus("Error");
+      }
+    });
 
-    // Re-render Lucide icons only if new items added (not on every render)
-    if (items.length > 0) {
-      requestAnimationFrame(() => lucide.createIcons());
-    }
-  }
+    // Copy — copies current textarea content
+    rpCopyBtn.addEventListener("click", async () => {
+      if (!rpInput.value || rpStreaming) return;
+      await window.api.copyItem(rpInput.value);
+      setStatus("Copied");
+    });
 
-  function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
-  function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+    // Paste — Issue #7: setFocusable(false) before pasteItem (which hides+shows window)
+    rpPasteBtn.addEventListener("click", async () => {
+      if (!rpInput.value || rpStreaming) return;
+      await window.api.setFocusable(false);
+      const res = await window.api.pasteItem(rpInput.value);
+      // Issue #7: restore focusable only after window is back visible
+      window.api.setFocusable(true);
+      if (res && res.error) { handlePasteError(res.error); return; }
+      setStatus("Pasted");
+    });
 
-  // ── Tab switching ──────────────────────────────────────────────
-  function showTab(tab) {
-    const isQueue = tab === "queue";
-    queue.style.display        = isQueue ? "" : "none";
-    empty.style.display        = isQueue ? (history.length === 0 ? "flex" : "none") : "none";
-    pasteNextBar.style.display = isQueue ? "" : "none";
-    promptsWrap.style.display  = isQueue ? "none" : "";
-    tabQueue.classList.toggle("active",   isQueue);
-    tabPrompts.classList.toggle("active", !isQueue);
-    if (!isQueue) loadAndRenderPrompts();
-  }
-  tabQueue.addEventListener("click",   () => showTab("queue"));
-  tabPrompts.addEventListener("click", () => showTab("prompts"));
+    rpClearBtn.addEventListener("click", () => {
+      rpStopTyping();
+      rpStreaming = false;
+      rpThinking = false;
+      rpInput.value = "";
+      rpInput.classList.remove("streaming", "error");
+      rpLoader.classList.remove("visible");
+      rpResetBtn();
+      rpResetChip();
+      rpInput.focus();
+      setStatus("Cleared");
+    });
 
-  // ── Render Saved Prompts ───────────────────────────────────────
-  function renderPrompts(prompts) {
-    promptsList.innerHTML = "";
-    const none = prompts.length === 0;
-    promptsList.style.display  = none ? "none" : "block";
-    promptsEmpty.style.display = none ? "flex" : "none";
+    // Open config in a separate focusable window
+    rpConfigBtn.addEventListener("click", () => window.api.openConfigWindow());
 
-    prompts.forEach((prompt) => {
-      const { id, text } = prompt;
-      const el = document.createElement("div");
-      el.className = "pi";
-      const preview = text.replace(/\n/g, " ");
-      const display = preview.length > 50 ? preview.slice(0, 47) + "..." : preview;
-      el.innerHTML = `
-        <span class="bm-icon"><i data-lucide="bookmark" style="width:11px;height:11px"></i></span>
-        <span class="txt">${esc(display)}</span>
-        <div class="pi-actions">
-          <button class="use-btn" title="Paste"><i data-lucide="play" style="width:11px;height:11px"></i></button>
-          <button class="del-btn" title="Remove"><i data-lucide="x" style="width:11px;height:11px"></i></button>
-        </div>
-      `;
+    // ── Context Menu ───────────────────────────────────────────────
+    document.addEventListener("click", () => { ctx.classList.remove("show"); ctxTarget = null; });
+    document.addEventListener("contextmenu", (e) => {
+      if (!e.target.closest(".qi")) { ctx.classList.remove("show"); ctxTarget = null; }
+    });
 
-      // Click card or paste btn → use prompt
-      const useFn = async (e) => {
-        e.stopPropagation();
+    ctx.querySelectorAll(".cm").forEach((el) => {
+      el.addEventListener("click", async () => {
+        const act = el.dataset.act;
+        const text = ctxTarget;
+        if (!text) return;
+        ctx.classList.remove("show"); ctxTarget = null;
+
+        if (act === "copy") {
+          await window.api.copyItem(text);
+          setStatus("Copied", text);
+        } else if (act === "save") {
+          await window.api.savePrompt(text);
+          setStatus("Saved as prompt", text);
+        } else if (act === "top") {
+          const r = await window.api.moveToTop(text);
+          render(r.history);
+          setStatus("Moved to top");
+        } else if (act === "reprompt") {
+          rpInput.value = text;
+          rpInput.classList.remove("error", "streaming");
+          showTab("reprompt");
+          setStatus("Sent to Reprompt", text);
+        } else if (act === "del") {
+          const idx = history.indexOf(text);
+          const items = queue.querySelectorAll(".qi");
+          undoStack.push([...history]);
+          if (undoStack.length > MAX_UNDO) undoStack.shift();
+          const r = await window.api.deleteItem(text);
+          if (idx >= 0 && items[idx]) {
+            await removeItemEl(items[idx], r.history);
+          } else {
+            render(r.history);
+          }
+          setStatus("Removed — Cmd+Z to undo");
+        }
+      });
+    });
+
+    // ── Title bar buttons ──────────────────────────────────────────
+    const btnPin = document.getElementById("btn-pin");
+    btnPin.addEventListener("click", () => {
+      isSticky = !isSticky;
+      btnPin.classList.toggle("on", isSticky);
+      window.api.toggleSticky(isSticky);
+      setStatus(isSticky ? "Pinned" : "Unpinned");
+    });
+
+    document.getElementById("btn-clear").addEventListener("click", async () => {
+      if (history.length > 0) {
+        undoStack.push([...history]);
+        if (undoStack.length > MAX_UNDO) undoStack.shift();
+      }
+      await window.api.clearAll();
+      render([]);
+      setStatus("Cleared — Cmd+Z to undo");
+    });
+
+    // ── Keyboard Shortcuts ─────────────────────────────────────────
+    document.addEventListener("keydown", (e) => {
+      const tag = document.activeElement && document.activeElement.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+      const isPasteKey = (e.code === "Space" && !e.ctrlKey && !e.metaKey)
+        || (e.code === "KeyV" && (e.metaKey || e.ctrlKey));
+      if (isPasteKey && history.length > 0) {
+        e.preventDefault();
         if (isPasting) return;
         isPasting = true;
         setStatus("Pasting...");
-        await window.api.usePrompt(text);
-        const res = await window.api.pasteItem(text);
-        isPasting = false;
-        if (res && res.error) {
-          setStatus(`Paste failed: ${res.error}`);
-        } else {
-          showTab("queue");
-          setStatus("Pasted prompt", text);
-        }
-      };
-      el.addEventListener("click", (e) => { if (!e.target.closest(".del-btn")) useFn(e); });
-      el.querySelector(".use-btn").addEventListener("click", useFn);
-
-      // Delete btn
-      el.querySelector(".del-btn").addEventListener("click", async (e) => {
-        e.stopPropagation();
-        el.classList.add("removing");
-        await delay(200);
-        await window.api.deletePrompt(id);
-        loadAndRenderPrompts();
-        setStatus("Prompt removed");
-      });
-
-      promptsList.appendChild(el);
-    });
-
-    requestAnimationFrame(() => lucide.createIcons());
-  }
-
-  async function loadAndRenderPrompts() {
-    const prompts = await window.api.getPrompts();
-    renderPrompts(prompts);
-  }
-
-  function setStatus(prefix, text) {
-    const msg = !text ? prefix : `${prefix}: ${text.slice(0, 28).replace(/\n/g, " ")}${text.length > 28 ? "..." : ""}`;
-    if (stText.textContent !== msg) stText.textContent = msg;
-  }
-
-  // ── Context Menu ───────────────────────────────────────────────
-  document.addEventListener("click", () => { ctx.classList.remove("show"); ctxTarget = null; });
-  document.addEventListener("contextmenu", (e) => {
-    if (!e.target.closest(".qi")) { ctx.classList.remove("show"); ctxTarget = null; }
-  });
-
-  ctx.querySelectorAll(".cm").forEach((el) => {
-    el.addEventListener("click", async () => {
-      const act = el.dataset.act;
-      const text = ctxTarget;
-      if (!text) return;
-      ctx.classList.remove("show"); ctxTarget = null;
-
-      if (act === "copy") {
-        await window.api.copyItem(text);
-        setStatus("Copied", text);
-      } else if (act === "save") {
-        await window.api.savePrompt(text);
-        setStatus("Saved as prompt", text);
-      } else if (act === "top") {
-        const r = await window.api.moveToTop(text);
-        render(r.history);
-        setStatus("Moved to top");
-      } else if (act === "del") {
-        const idx = history.indexOf(text);
-        const items = queue.querySelectorAll(".qi");
-        if (idx >= 0 && items[idx]) { items[idx].classList.add("removing"); await delay(200); }
-        undoStack.push([...history]);
-        if (undoStack.length > MAX_UNDO) undoStack.shift();
-        const r = await window.api.deleteItem(text);
-        render(r.history);
-        setStatus("Removed — Cmd+Z to undo");
-      }
-    });
-  });
-
-  // ── Title bar buttons ──────────────────────────────────────────
-
-  document.getElementById("btn-auto").addEventListener("click", () => {
-    autoRemove = !autoRemove;
-    const btn = document.getElementById("btn-auto");
-    btn.classList.toggle("on-green", autoRemove);
-    btn.setAttribute("data-tip", autoRemove ? "Auto-remove ON" : "Auto-remove OFF");
-    window.api.setAutoRemove(autoRemove);
-    setStatus(autoRemove ? "Auto-remove ON" : "Auto-remove OFF");
-  });
-
-  document.getElementById("btn-pin").addEventListener("click", () => {
-    isSticky = !isSticky;
-    document.getElementById("btn-pin").classList.toggle("on", isSticky);
-    window.api.toggleSticky(isSticky);
-    setStatus(isSticky ? "Pinned" : "Unpinned");
-  });
-
-  document.getElementById("btn-clear").addEventListener("click", async () => {
-    await window.api.clearAll();
-    render([]);
-    setStatus("Cleared");
-  });
-
-  // ── Paste Next button ──────────────────────────────────────────
-  btnNext.addEventListener("click", () => {
-    if (history.length === 0 || isPasting) return;
-    isPasting = true;
-    btnNext.disabled = true;
-    setStatus("Pasting...");
-    window.api.pasteNext().then((res) => {
-      isPasting = false;
-      btnNext.disabled = history.length === 0;
-      if (res && res.error) {
-        stText.textContent = res.error.includes("not allowed")
-          ? "Enable Accessibility in System Preferences"
-          : res.error.includes("timeout") ? "Paste timeout — try again"
-          : `Paste failed: ${res.error}`;
-        stText.style.color = "var(--red)";
-        setTimeout(() => { stText.style.color = ""; setStatus("Ready"); }, 5000);
+        window.api.pasteNext().then((res) => {
+          isPasting = false;
+          if (res && res.error) { handlePasteError(res.error); return; }
+          // Remove index 0 — safe even with duplicate text values
+          history = history.slice(1);
+          render(history);
+          setStatus("Pasted", res.text);
+        });
         return;
       }
-      setStatus(`Pasted #1`, res.text);
-      if (res.remaining !== undefined) {
-        stCount.innerHTML = res.remaining > 0
-          ? `<span class="cnt">${res.remaining}</span> remaining`
-          : `<span class="cnt">Queue empty</span>`;
+
+      if ((e.metaKey || e.ctrlKey) && e.code === "KeyZ") {
+        e.preventDefault();
+        if (undoStack.length > 0) {
+          prevTopItem = null;
+          render(undoStack.pop());
+          setStatus("Undo");
+        }
+        return;
+      }
+
+      if (e.code === "Escape") {
+        e.preventDefault();
+        window.api.minimizeApp();
       }
     });
-  });
 
-  // ── Keyboard Shortcuts ────────────────────────────────────────────
-  document.addEventListener("keydown", (e) => {
-    if (e.code === "Space" && history.length > 0 && !e.ctrlKey && !e.metaKey) {
-      e.preventDefault();
-      btnNext.click();
-    }
-    if ((e.metaKey || e.ctrlKey) && e.code === "KeyZ") {
-      e.preventDefault();
-      if (undoStack.length > 0) {
-        const prevHistory = undoStack.pop();
-        render(prevHistory);
-        setStatus("Undo");
+    document.getElementById("btn-min").addEventListener("click", () => window.api.minimizeApp());
+    document.getElementById("btn-close").addEventListener("click", () => window.api.closeApp());
+
+    // ── Events from main ───────────────────────────────────────────
+    window.api.onClipboardUpdate((items) => {
+      if (!initialLoadDone) return;
+      const grew = items.length > history.length;
+      render(items);
+      if (grew && items.length > 0) {
+        setStatus("Added", items[0]);
+        // Auto-fill reprompt input when on reprompt tab — Issue #5: skip if streaming
+        if (currentTab === "reprompt" && !rpStreaming) rpInput.value = items[0];
       }
-    }
-    if (e.code === "Escape") {
-      e.preventDefault();
-      window.api.minimizeApp();
-    }
-  });
+    });
 
-  document.getElementById("btn-min").addEventListener("click", () => window.api.minimizeApp());
-  document.getElementById("btn-close").addEventListener("click", () => window.api.closeApp());
+    window.api.getHistory().then((r) => {
+      render(r.history);
+      initialLoadDone = true;
+    });
 
-  // ── Events from main ───────────────────────────────────────────
-  window.api.onClipboardUpdate((items) => {
-    render(items);
-    if (items.length > 0) setStatus("Added", items[0]);
-  });
-
-  window.api.getHistory().then((r) => render(r.history));
-</script>
+    // Default tab is reprompt — make window focusable for textarea input
+    window.api.setFocusable(true);
+  </script>
 </body>
+
 </html>
