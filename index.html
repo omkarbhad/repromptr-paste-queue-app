@@ -283,6 +283,116 @@
   }
   #status .cnt { color: var(--text2); font-weight: 600; }
 
+  /* ── Tab Bar ──────────────────────────────────────────────────── */
+  #tabs {
+    display: flex;
+    gap: 3px;
+    -webkit-app-region: no-drag;
+    margin-right: 4px;
+  }
+  .tab-btn {
+    padding: 3px 9px;
+    font-size: 10.5px;
+    font-weight: 500;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.1px;
+  }
+  .tab-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+  .tab-btn.active {
+    background: var(--accent-dim);
+    border-color: rgba(124, 108, 240, 0.35);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* ── Prompts List ──────────────────────────────────────────────── */
+  #prompts-wrap {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.06) transparent;
+  }
+  #prompts-wrap::-webkit-scrollbar { width: 4px; }
+  #prompts-wrap::-webkit-scrollbar-track { background: transparent; }
+  #prompts-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
+
+  .pi {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    margin-bottom: 3px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(.4,0,.2,1);
+    animation: slideIn 0.22s cubic-bezier(.4,0,.2,1);
+  }
+  .pi:hover { background: var(--bg-card-h); border-color: var(--border-h); }
+  .pi:active { background: var(--bg-card-act); transform: scale(0.985); }
+  .pi .bm-icon {
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(251, 191, 36, 0.18);
+    border-radius: 6px;
+    color: var(--amber);
+    flex-shrink: 0;
+  }
+  .pi .txt {
+    flex: 1;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+  .pi .pi-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .pi:hover .pi-actions { opacity: 1; }
+  .pi .use-btn, .pi .del-btn {
+    width: 22px; height: 22px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .pi .use-btn { color: var(--green); }
+  .pi .use-btn:hover { background: var(--green-dim); }
+  .pi .del-btn { color: var(--text3); }
+  .pi .del-btn:hover { background: var(--red-dim); color: var(--red); }
+  .pi.removing { animation: slideOut 0.2s cubic-bezier(.4,0,.2,1) forwards; }
+
+  #prompts-empty {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 10px;
+    padding: 40px 20px;
+    color: var(--text3);
+  }
+  #prompts-empty p { font-size: 12.5px; text-align: center; line-height: 1.5; }
+  #prompts-empty .hint { font-size: 11px; opacity: 0.6; }
+
   /* ── Tooltips ──────────────────────────────────────────────────── */
   [data-tip] { position: relative; }
   [data-tip]::after {
@@ -312,6 +422,11 @@
   <div id="titlebar">
     <i data-lucide="clipboard-paste" class="logo" style="width:18px;height:18px"></i>
     <h1>Pastr</h1>
+
+    <div id="tabs">
+      <button class="tab-btn active" id="tab-queue">Queue</button>
+      <button class="tab-btn"        id="tab-prompts">Saved</button>
+    </div>
 
     <button class="tb-btn on-green" id="btn-auto" data-tip="Auto-remove ON | Click to toggle">
       <i data-lucide="trash-2" style="width:13px;height:13px"></i>
@@ -350,6 +465,16 @@
     <p class="hint">Copy text anywhere to start<br><br><strong>Shortcuts:</strong><br>Space = Paste Next<br>Cmd+Z = Undo<br>Esc = Hide</p>
   </div>
 
+  <!-- ── Saved Prompts ──────────────────────────────────────────── -->
+  <div id="prompts-wrap" style="display:none">
+    <div id="prompts-list"></div>
+    <div id="prompts-empty">
+      <i data-lucide="bookmark" style="width:44px;height:44px;opacity:0.15"></i>
+      <p>No saved prompts yet</p>
+      <p class="hint">Right-click any queue item<br>and choose <strong>Save as Prompt</strong></p>
+    </div>
+  </div>
+
   <!-- ── Status ─────────────────────────────────────────────────── -->
   <div id="status">
     <span id="st-text">Ready</span>
@@ -365,6 +490,10 @@
     <div class="cm" data-act="top">
       <i data-lucide="arrow-up-to-line" style="width:13px;height:13px"></i>
       Move to top
+    </div>
+    <div class="cm" data-act="save">
+      <i data-lucide="bookmark" style="width:13px;height:13px"></i>
+      Save as Prompt
     </div>
     <div class="cm danger" data-act="del">
       <i data-lucide="circle-x" style="width:13px;height:13px"></i>
@@ -387,13 +516,19 @@
   const MAX_UNDO = 10;
 
   // ── DOM ────────────────────────────────────────────────────────
-  const queue       = document.getElementById("queue-wrap");
-  const empty       = document.getElementById("empty");
-  const stText      = document.getElementById("st-text");
-  const stCount     = document.getElementById("st-count");
-  const ctx         = document.getElementById("ctx");
-  const btnNext     = document.getElementById("btn-paste-next");
-  const nextPreview = document.getElementById("next-preview");
+  const queue        = document.getElementById("queue-wrap");
+  const empty        = document.getElementById("empty");
+  const stText       = document.getElementById("st-text");
+  const stCount      = document.getElementById("st-count");
+  const ctx          = document.getElementById("ctx");
+  const btnNext      = document.getElementById("btn-paste-next");
+  const nextPreview  = document.getElementById("next-preview");
+  const promptsWrap  = document.getElementById("prompts-wrap");
+  const promptsList  = document.getElementById("prompts-list");
+  const promptsEmpty = document.getElementById("prompts-empty");
+  const pasteNextBar = document.getElementById("paste-next-bar");
+  const tabQueue     = document.getElementById("tab-queue");
+  const tabPrompts   = document.getElementById("tab-prompts");
 
   // ── Render ─────────────────────────────────────────────────────
   function render(items) {
@@ -482,6 +617,82 @@
   function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
   function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+  // ── Tab switching ──────────────────────────────────────────────
+  function showTab(tab) {
+    const isQueue = tab === "queue";
+    queue.style.display        = isQueue ? "" : "none";
+    empty.style.display        = isQueue ? (history.length === 0 ? "flex" : "none") : "none";
+    pasteNextBar.style.display = isQueue ? "" : "none";
+    promptsWrap.style.display  = isQueue ? "none" : "";
+    tabQueue.classList.toggle("active",   isQueue);
+    tabPrompts.classList.toggle("active", !isQueue);
+    if (!isQueue) loadAndRenderPrompts();
+  }
+  tabQueue.addEventListener("click",   () => showTab("queue"));
+  tabPrompts.addEventListener("click", () => showTab("prompts"));
+
+  // ── Render Saved Prompts ───────────────────────────────────────
+  function renderPrompts(prompts) {
+    promptsList.innerHTML = "";
+    const none = prompts.length === 0;
+    promptsList.style.display  = none ? "none" : "block";
+    promptsEmpty.style.display = none ? "flex" : "none";
+
+    prompts.forEach((prompt) => {
+      const { id, text } = prompt;
+      const el = document.createElement("div");
+      el.className = "pi";
+      const preview = text.replace(/\n/g, " ");
+      const display = preview.length > 50 ? preview.slice(0, 47) + "..." : preview;
+      el.innerHTML = `
+        <span class="bm-icon"><i data-lucide="bookmark" style="width:11px;height:11px"></i></span>
+        <span class="txt">${esc(display)}</span>
+        <div class="pi-actions">
+          <button class="use-btn" title="Paste"><i data-lucide="play" style="width:11px;height:11px"></i></button>
+          <button class="del-btn" title="Remove"><i data-lucide="x" style="width:11px;height:11px"></i></button>
+        </div>
+      `;
+
+      // Click card or paste btn → use prompt
+      const useFn = async (e) => {
+        e.stopPropagation();
+        if (isPasting) return;
+        isPasting = true;
+        setStatus("Pasting...");
+        await window.api.usePrompt(text);
+        const res = await window.api.pasteItem(text);
+        isPasting = false;
+        if (res && res.error) {
+          setStatus(`Paste failed: ${res.error}`);
+        } else {
+          showTab("queue");
+          setStatus("Pasted prompt", text);
+        }
+      };
+      el.addEventListener("click", (e) => { if (!e.target.closest(".del-btn")) useFn(e); });
+      el.querySelector(".use-btn").addEventListener("click", useFn);
+
+      // Delete btn
+      el.querySelector(".del-btn").addEventListener("click", async (e) => {
+        e.stopPropagation();
+        el.classList.add("removing");
+        await delay(200);
+        await window.api.deletePrompt(id);
+        loadAndRenderPrompts();
+        setStatus("Prompt removed");
+      });
+
+      promptsList.appendChild(el);
+    });
+
+    requestAnimationFrame(() => lucide.createIcons());
+  }
+
+  async function loadAndRenderPrompts() {
+    const prompts = await window.api.getPrompts();
+    renderPrompts(prompts);
+  }
+
   function setStatus(prefix, text) {
     const msg = !text ? prefix : `${prefix}: ${text.slice(0, 28).replace(/\n/g, " ")}${text.length > 28 ? "..." : ""}`;
     if (stText.textContent !== msg) stText.textContent = msg;
@@ -503,6 +714,9 @@
       if (act === "copy") {
         await window.api.copyItem(text);
         setStatus("Copied", text);
+      } else if (act === "save") {
+        await window.api.savePrompt(text);
+        setStatus("Saved as prompt", text);
       } else if (act === "top") {
         const r = await window.api.moveToTop(text);
         render(r.history);

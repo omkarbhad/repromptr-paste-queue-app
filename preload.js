@@ -24,4 +24,10 @@ contextBridge.exposeInMainWorld("api", {
   toggleSticky: (sticky) => ipcRenderer.invoke("toggle-sticky", sticky),
   minimizeApp: () => ipcRenderer.invoke("minimize-app"),
   closeApp: () => ipcRenderer.invoke("close-app"),
+
+  // Saved prompts
+  getPrompts:   ()     => ipcRenderer.invoke("get-prompts"),
+  savePrompt:   (text) => ipcRenderer.invoke("save-prompt", text),
+  deletePrompt: (id)   => ipcRenderer.invoke("delete-prompt", id),
+  usePrompt:    (text) => ipcRenderer.invoke("use-prompt", text),
 });

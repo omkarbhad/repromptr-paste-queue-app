@@ -28,6 +28,9 @@ let pollInterval;
 let autoRemove = true;
 const MAX_ITEMS = 30;
 
+let savedPrompts = [];
+const PROMPTS_FILE = path.join(os.homedir(), ".pastr-prompts");
+
 // ── Window Position Persistence ───────────────────────────────────
 
 function saveWindowPosition() {
@@ -55,6 +58,22 @@ function loadWindowPosition() {
   } catch (e) {
     return { x: undefined, y: undefined };
   }
+}
+
+// ── Saved Prompts Persistence ─────────────────────────────────────
+
+function loadPrompts() {
+  try {
+    savedPrompts = JSON.parse(require("fs").readFileSync(PROMPTS_FILE, "utf-8"));
+  } catch (e) {
+    savedPrompts = [];
+  }
+}
+
+function savePrompts() {
+  try {
+    require("fs").writeFileSync(PROMPTS_FILE, JSON.stringify(savedPrompts));
+  } catch (e) {}
 }
 
 // ── Tray icon ─────────────────────────────────────────────────────
@@ -321,9 +340,40 @@ ipcMain.handle("set-auto-remove", (_event, enabled) => {
 
 ipcMain.handle("get-history", () => ({ history: clipboardHistory }));
 
+// ── Saved Prompts Handlers ────────────────────────────────────────
+
+ipcMain.handle("get-prompts", () => savedPrompts);
+
+ipcMain.handle("save-prompt", (_event, text) => {
+  if (!text || savedPrompts.find((p) => p.text === text)) return { ok: false };
+  savedPrompts.push({ id: Date.now().toString(), text, createdAt: Date.now() });
+  savePrompts();
+  return { ok: true };
+});
+
+ipcMain.handle("delete-prompt", (_event, id) => {
+  savedPrompts = savedPrompts.filter((p) => p.id !== id);
+  savePrompts();
+  return { ok: true };
+});
+
+ipcMain.handle("use-prompt", (_event, text) => {
+  // Push to queue so it shows up and can be pasted
+  if (!clipboardHistory.includes(text)) {
+    clipboardHistory.unshift(text);
+    if (clipboardHistory.length > MAX_ITEMS) clipboardHistory.pop();
+    if (win && !win.isDestroyed()) {
+      win.webContents.send("clipboard-update", clipboardHistory);
+    }
+  }
+  clipboard.writeText(text);
+  return { ok: true };
+});
+
 // ── App lifecycle ────────────────────────────────────────────────
 
 app.whenReady().then(() => {
+  loadPrompts();
   createWindow();
   createTray();
 });
