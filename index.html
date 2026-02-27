@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pastr</title>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg:          #0a0a0e;
+    --bg-card:     #161620;
+    --bg-card-h:   #1e1e2a;
+    --bg-card-act: #252534;
+    --bar:         #08080c;
+    --accent:      #7c6cf0;
+    --accent-dim:  rgba(124, 108, 240, 0.25);
+    --green:       #34d399;
+    --green-dim:   rgba(52, 211, 153, 0.20);
+    --red:         #f87171;
+    --red-dim:     rgba(248, 113, 113, 0.18);
+    --amber:       #fbbf24;
+    --text:        rgba(255, 255, 255, 0.92);
+    --text2:       rgba(255, 255, 255, 0.50);
+    --text3:       rgba(255, 255, 255, 0.25);
+    --border:      rgba(255, 255, 255, 0.06);
+    --border-h:    rgba(255, 255, 255, 0.12);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: var(--bg);
+    overflow: hidden;
+  }
+
+  /* ── Title Bar ─────────────────────────────────────────────────── */
+  #titlebar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--bar);
+    -webkit-app-region: drag;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #titlebar .logo { color: var(--accent); flex-shrink: 0; }
+
+  #titlebar h1 {
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .tb-btn {
+    -webkit-app-region: no-drag;
+    width: 26px; height: 26px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    color: var(--text2);
+    background: transparent;
+  }
+  .tb-btn:hover {
+    background: rgba(255,255,255,0.07);
+    border-color: var(--border-h);
+    color: var(--text);
+  }
+
+  .tb-btn.on {
+    background: var(--accent-dim);
+    border-color: rgba(124, 108, 240, 0.35);
+    color: var(--accent);
+  }
+  .tb-btn.on:hover { background: rgba(124, 108, 240, 0.35); }
+  .tb-btn.on-green {
+    background: var(--green-dim);
+    border-color: rgba(52, 211, 153, 0.30);
+    color: var(--green);
+  }
+  .tb-btn.on-green:hover { background: rgba(52, 211, 153, 0.30); }
+
+  .tb-btn.close:hover { background: var(--red-dim); color: var(--red); border-color: rgba(248,113,113,0.25); }
+  .tb-btn.min:hover   { background: rgba(251,191,36,0.15); color: var(--amber); border-color: rgba(251,191,36,0.25); }
+
+  .sep { width: 1px; height: 16px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
+
+  /* ── Paste Next Button ─────────────────────────────────────────── */
+  #paste-next-bar {
+    padding: 6px 6px 0;
+    flex-shrink: 0;
+  }
+
+  #btn-paste-next {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid rgba(124, 108, 240, 0.25);
+    border-radius: 10px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    transition: all 0.18s ease;
+    letter-spacing: 0.2px;
+  }
+  #btn-paste-next:hover {
+    background: rgba(124, 108, 240, 0.35);
+    border-color: rgba(124, 108, 240, 0.45);
+  }
+  #btn-paste-next:active { transform: scale(0.98); }
+  #btn-paste-next:disabled {
+    opacity: 0.3;
+    cursor: default;
+    pointer-events: none;
+  }
+  #btn-paste-next .next-preview {
+    color: rgba(255,255,255,0.45);
+    font-weight: 400;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ── Queue List ────────────────────────────────────────────────── */
+  #queue-wrap {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.06) transparent;
+  }
+  #queue-wrap::-webkit-scrollbar { width: 4px; }
+  #queue-wrap::-webkit-scrollbar-track { background: transparent; }
+  #queue-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
+
+  .qi {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    margin-bottom: 3px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(.4,0,.2,1);
+    animation: slideIn 0.22s cubic-bezier(.4,0,.2,1);
+  }
+  .qi:hover { background: var(--bg-card-h); border-color: var(--border-h); }
+  .qi:active { background: var(--bg-card-act); transform: scale(0.985); }
+
+  .qi .num {
+    width: 20px; height: 20px;
+    line-height: 20px;
+    text-align: center;
+    font-size: 9.5px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+
+  .qi .txt {
+    flex: 1;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  .qi .del-btn {
+    width: 22px; height: 22px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    opacity: 0;
+  }
+  .qi:hover .del-btn { opacity: 1; }
+  .qi .del-btn:hover { background: var(--red-dim); color: var(--red); }
+
+  .qi.removing { animation: slideOut 0.2s cubic-bezier(.4,0,.2,1) forwards; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes slideOut {
+    from { opacity: 1; transform: translateX(0); max-height: 50px; }
+    to   { opacity: 0; transform: translateX(30px); max-height: 0; padding: 0 12px; margin: 0; border-width: 0; }
+  }
+
+  /* ── Context Menu ──────────────────────────────────────────────── */
+  #ctx {
+    position: fixed;
+    display: none;
+    background: #0e0e14;
+    border: 1px solid var(--border-h);
+    border-radius: 10px;
+    padding: 4px;
+    min-width: 150px;
+    z-index: 1000;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  }
+  #ctx.show { display: block; }
+
+  .cm {
+    padding: 7px 11px;
+    font-size: 11.5px;
+    color: var(--text);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.12s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cm:hover { background: rgba(255,255,255,0.06); }
+  .cm.danger:hover { background: var(--red-dim); color: var(--red); }
+
+  /* ── Empty State ───────────────────────────────────────────────── */
+  #empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 10px;
+    padding: 40px 20px;
+    color: var(--text3);
+  }
+  #empty .empty-icon { opacity: 0.15; }
+  #empty p { font-size: 12.5px; text-align: center; line-height: 1.5; }
+  #empty .hint { font-size: 11px; opacity: 0.6; }
+  #empty .hint strong { font-weight: 600; opacity: 0.8; }
+
+  /* ── Status Bar ────────────────────────────────────────────────── */
+  #status {
+    padding: 7px 12px;
+    font-size: 10.5px;
+    color: var(--text3);
+    background: var(--bar);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  #status .cnt { color: var(--text2); font-weight: 600; }
+
+  /* ── Tooltips ──────────────────────────────────────────────────── */
+  [data-tip] { position: relative; }
+  [data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%) scale(0.92);
+    background: #060610;
+    color: var(--text);
+    font-size: 10px;
+    padding: 3px 7px;
+    border-radius: 5px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: all 0.12s ease;
+    border: 1px solid var(--border);
+  }
+  [data-tip]:hover::after { opacity: 1; transform: translateX(-50%) scale(1); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Title Bar ──────────────────────────────────────────────── -->
+  <div id="titlebar">
+    <i data-lucide="clipboard-paste" class="logo" style="width:18px;height:18px"></i>
+    <h1>Pastr</h1>
+
+    <button class="tb-btn on-green" id="btn-auto" data-tip="Auto-remove ON | Click to toggle">
+      <i data-lucide="trash-2" style="width:13px;height:13px"></i>
+    </button>
+    <button class="tb-btn on" id="btn-pin" data-tip="Pin on top | Click to toggle">
+      <i data-lucide="pin" style="width:13px;height:13px"></i>
+    </button>
+    <button class="tb-btn" id="btn-clear" data-tip="Clear all">
+      <i data-lucide="x-circle" style="width:13px;height:13px"></i>
+    </button>
+
+    <div class="sep"></div>
+
+    <button class="tb-btn min" id="btn-min" data-tip="Hide">
+      <i data-lucide="minus" style="width:13px;height:13px"></i>
+    </button>
+    <button class="tb-btn close" id="btn-close" data-tip="Quit">
+      <i data-lucide="x" style="width:13px;height:13px"></i>
+    </button>
+  </div>
+
+  <!-- ── Paste Next ────────────────────────────────────────────── -->
+  <div id="paste-next-bar">
+    <button id="btn-paste-next" disabled data-tip="Space key">
+      <i data-lucide="play" style="width:14px;height:14px"></i>
+      <span>Paste Next</span>
+      <span class="next-preview" id="next-preview"></span>
+    </button>
+  </div>
+
+  <!-- ── Queue / Empty ──────────────────────────────────────────── -->
+  <div id="queue-wrap"></div>
+  <div id="empty">
+    <i data-lucide="clipboard-list" class="empty-icon" style="width:44px;height:44px"></i>
+    <p>Nothing here yet</p>
+    <p class="hint">Copy text anywhere to start<br><br><strong>Shortcuts:</strong><br>Space = Paste Next<br>Cmd+Z = Undo<br>Esc = Hide</p>
+  </div>
+
+  <!-- ── Status ─────────────────────────────────────────────────── -->
+  <div id="status">
+    <span id="st-text">Ready</span>
+    <span id="st-count"></span>
+  </div>
+
+  <!-- ── Context Menu ───────────────────────────────────────────── -->
+  <div id="ctx">
+    <div class="cm" data-act="copy">
+      <i data-lucide="copy" style="width:13px;height:13px"></i>
+      Copy
+    </div>
+    <div class="cm" data-act="top">
+      <i data-lucide="arrow-up-to-line" style="width:13px;height:13px"></i>
+      Move to top
+    </div>
+    <div class="cm danger" data-act="del">
+      <i data-lucide="circle-x" style="width:13px;height:13px"></i>
+      Delete
+    </div>
+  </div>
+</div>
+
+<script>
+  // Initialize Lucide icons
+  lucide.createIcons();
+
+  // ── State ──────────────────────────────────────────────────────
+  let history = [];
+  let isSticky = true;
+  let autoRemove = true;
+  let ctxTarget = null;
+  let isPasting = false;
+  let undoStack = [];
+  const MAX_UNDO = 10;
+
+  // ── DOM ────────────────────────────────────────────────────────
+  const queue       = document.getElementById("queue-wrap");
+  const empty       = document.getElementById("empty");
+  const stText      = document.getElementById("st-text");
+  const stCount     = document.getElementById("st-count");
+  const ctx         = document.getElementById("ctx");
+  const btnNext     = document.getElementById("btn-paste-next");
+  const nextPreview = document.getElementById("next-preview");
+
+  // ── Render ─────────────────────────────────────────────────────
+  function render(items) {
+    history = items;
+    queue.innerHTML = "";
+    const none = items.length === 0;
+    queue.style.display = none ? "none" : "block";
+    empty.style.display = none ? "flex" : "none";
+
+    items.forEach((text, i) => {
+      const el = document.createElement("div");
+      el.className = "qi";
+
+      const preview = text.replace(/\n/g, " ");
+      const display = preview.length > 50 ? preview.slice(0, 47) + "..." : preview;
+
+      el.innerHTML = `
+        <span class="num">${i + 1}</span>
+        <span class="txt">${esc(display)}</span>
+        <button class="del-btn" title="Remove"><i data-lucide="x" style="width:12px;height:12px"></i></button>
+      `;
+
+      // Click to paste
+      el.addEventListener("click", (e) => {
+        if (e.target.closest(".del-btn")) return;
+        if (e.button !== 0 || isPasting) return;
+        isPasting = true;
+        setStatus("Pasting...");
+        window.api.pasteItem(text).then((res) => {
+          isPasting = false;
+          if (res && res.error) {
+            stText.textContent = res.error.includes("not allowed")
+              ? "Enable Accessibility in System Preferences"
+              : res.error.includes("timeout") ? "Paste timeout — try again"
+              : `Paste failed: ${res.error}`;
+            stText.style.color = "var(--red)";
+            setTimeout(() => { stText.style.color = ""; setStatus("Ready"); }, 5000);
+            return;
+          }
+          setStatus("Pasted", text);
+        });
+      });
+
+      // Inline delete
+      el.querySelector(".del-btn").addEventListener("click", async (e) => {
+        e.stopPropagation();
+        el.classList.add("removing");
+        await delay(200);
+        undoStack.push([...history]); // Save state for undo
+        if (undoStack.length > MAX_UNDO) undoStack.shift();
+        const res = await window.api.deleteItem(text);
+        render(res.history);
+        setStatus("Removed — Cmd+Z to undo", text);
+      });
+
+      // Right-click
+      el.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        ctxTarget = text;
+        ctx.style.left = e.clientX + "px";
+        ctx.style.top  = e.clientY + "px";
+        ctx.classList.add("show");
+      });
+
+      queue.appendChild(el);
+    });
+
+    if (items.length > 0) {
+      stCount.innerHTML = `<span class="cnt">${items.length}</span> item${items.length !== 1 ? "s" : ""}`;
+      const p = items[0].replace(/\n/g, " ");
+      nextPreview.textContent = p.length > 20 ? p.slice(0, 18) + "…" : p;
+      btnNext.disabled = false;
+    } else {
+      stCount.innerHTML = "";
+      nextPreview.textContent = "";
+      btnNext.disabled = true;
+    }
+
+    // Re-render Lucide icons only if new items added (not on every render)
+    if (items.length > 0) {
+      requestAnimationFrame(() => lucide.createIcons());
+    }
+  }
+
+  function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+  function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  function setStatus(prefix, text) {
+    const msg = !text ? prefix : `${prefix}: ${text.slice(0, 28).replace(/\n/g, " ")}${text.length > 28 ? "..." : ""}`;
+    if (stText.textContent !== msg) stText.textContent = msg;
+  }
+
+  // ── Context Menu ───────────────────────────────────────────────
+  document.addEventListener("click", () => { ctx.classList.remove("show"); ctxTarget = null; });
+  document.addEventListener("contextmenu", (e) => {
+    if (!e.target.closest(".qi")) { ctx.classList.remove("show"); ctxTarget = null; }
+  });
+
+  ctx.querySelectorAll(".cm").forEach((el) => {
+    el.addEventListener("click", async () => {
+      const act = el.dataset.act;
+      const text = ctxTarget;
+      if (!text) return;
+      ctx.classList.remove("show"); ctxTarget = null;
+
+      if (act === "copy") {
+        await window.api.copyItem(text);
+        setStatus("Copied", text);
+      } else if (act === "top") {
+        const r = await window.api.moveToTop(text);
+        render(r.history);
+        setStatus("Moved to top");
+      } else if (act === "del") {
+        const idx = history.indexOf(text);
+        const items = queue.querySelectorAll(".qi");
+        if (idx >= 0 && items[idx]) { items[idx].classList.add("removing"); await delay(200); }
+        undoStack.push([...history]);
+        if (undoStack.length > MAX_UNDO) undoStack.shift();
+        const r = await window.api.deleteItem(text);
+        render(r.history);
+        setStatus("Removed — Cmd+Z to undo");
+      }
+    });
+  });
+
+  // ── Title bar buttons ──────────────────────────────────────────
+
+  document.getElementById("btn-auto").addEventListener("click", () => {
+    autoRemove = !autoRemove;
+    const btn = document.getElementById("btn-auto");
+    btn.classList.toggle("on-green", autoRemove);
+    btn.setAttribute("data-tip", autoRemove ? "Auto-remove ON" : "Auto-remove OFF");
+    window.api.setAutoRemove(autoRemove);
+    setStatus(autoRemove ? "Auto-remove ON" : "Auto-remove OFF");
+  });
+
+  document.getElementById("btn-pin").addEventListener("click", () => {
+    isSticky = !isSticky;
+    document.getElementById("btn-pin").classList.toggle("on", isSticky);
+    window.api.toggleSticky(isSticky);
+    setStatus(isSticky ? "Pinned" : "Unpinned");
+  });
+
+  document.getElementById("btn-clear").addEventListener("click", async () => {
+    await window.api.clearAll();
+    render([]);
+    setStatus("Cleared");
+  });
+
+  // ── Paste Next button ──────────────────────────────────────────
+  btnNext.addEventListener("click", () => {
+    if (history.length === 0 || isPasting) return;
+    isPasting = true;
+    btnNext.disabled = true;
+    setStatus("Pasting...");
+    window.api.pasteNext().then((res) => {
+      isPasting = false;
+      btnNext.disabled = history.length === 0;
+      if (res && res.error) {
+        stText.textContent = res.error.includes("not allowed")
+          ? "Enable Accessibility in System Preferences"
+          : res.error.includes("timeout") ? "Paste timeout — try again"
+          : `Paste failed: ${res.error}`;
+        stText.style.color = "var(--red)";
+        setTimeout(() => { stText.style.color = ""; setStatus("Ready"); }, 5000);
+        return;
+      }
+      setStatus(`Pasted #1`, res.text);
+      if (res.remaining !== undefined) {
+        stCount.innerHTML = res.remaining > 0
+          ? `<span class="cnt">${res.remaining}</span> remaining`
+          : `<span class="cnt">Queue empty</span>`;
+      }
+    });
+  });
+
+  // ── Keyboard Shortcuts ────────────────────────────────────────────
+  document.addEventListener("keydown", (e) => {
+    if (e.code === "Space" && history.length > 0 && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      btnNext.click();
+    }
+    if ((e.metaKey || e.ctrlKey) && e.code === "KeyZ") {
+      e.preventDefault();
+      if (undoStack.length > 0) {
+        const prevHistory = undoStack.pop();
+        render(prevHistory);
+        setStatus("Undo");
+      }
+    }
+    if (e.code === "Escape") {
+      e.preventDefault();
+      window.api.minimizeApp();
+    }
+  });
+
+  document.getElementById("btn-min").addEventListener("click", () => window.api.minimizeApp());
+  document.getElementById("btn-close").addEventListener("click", () => window.api.closeApp());
+
+  // ── Events from main ───────────────────────────────────────────
+  window.api.onClipboardUpdate((items) => {
+    render(items);
+    if (items.length > 0) setStatus("Added", items[0]);
+  });
+
+  window.api.getHistory().then((r) => render(r.history));
+</script>
+</body>
+</html>

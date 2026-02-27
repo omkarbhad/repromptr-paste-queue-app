@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Build & Distribution
+dist/
+build/
+out/
+*.exe
+*.dmg
+*.deb
+*.AppImage
+*.zip
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+*.log
+
+# Electron
+.electron-gyp/
+
+# Window position file
+.pastr-window-pos
+~/.pastr-window-pos

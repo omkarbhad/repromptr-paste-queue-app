@@ -1,0 +1,115 @@
+{
+  "name": "pastr",
+  "version": "1.0.0",
+  "description": "A beautiful floating clipboard queue manager for macOS, Windows & Linux",
+  "main": "main.js",
+  "author": "Omkar Bhad",
+  "license": "MIT",
+  "homepage": "https://github.com/omkarbhad/pastr-paste-queue-app#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/omkarbhad/pastr-paste-queue-app.git"
+  },
+  "bugs": {
+    "url": "https://github.com/omkarbhad/pastr-paste-queue-app/issues"
+  },
+  "keywords": [
+    "clipboard",
+    "clipboard-manager",
+    "paste",
+    "electron",
+    "cross-platform",
+    "productivity",
+    "utility"
+  ],
+  "scripts": {
+    "start": "ELECTRON_RUN_AS_NODE= electron .",
+    "build": "electron-builder",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux",
+    "build:all": "electron-builder -mwl"
+  },
+  "build": {
+    "appId": "com.pastr.app",
+    "productName": "Pastr",
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "node_modules/**/*"
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.utilities",
+      "sign": null
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32",
+            "arm64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64",
+            "ia32",
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "arm64",
+            "armv7l"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64",
+            "arm64",
+            "armv7l"
+          ]
+        }
+      ],
+      "category": "Utility",
+      "maintainer": "Pastr Contributors"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^24.9.1"
+  }
+}
