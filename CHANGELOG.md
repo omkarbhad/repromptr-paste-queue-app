@@ -5,6 +5,14 @@ All notable changes to Repromptr are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.0.0 (2026-03-05)
+
+
+### Features
+
+* add Saved Prompts feature with persistent disk storage ([048be1f](https://github.com/omkarbhad/repromptr-paste-queue-app/commit/048be1f8b38dc81ef345592480d1a9b51ab92034))
+* Repromptr v2.0.0 — AI-powered text rewriting with streaming ([1bfa1b0](https://github.com/omkarbhad/repromptr-paste-queue-app/commit/1bfa1b0646a5e83a65949ad8b0f4cb577cccc9c1))
+
 ## [2.0.0] - 2026-02-27
 
 ### Added
